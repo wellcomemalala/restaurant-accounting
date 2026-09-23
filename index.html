@@ -312,6 +312,8 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
             <span id="vendor-presets" style="display:flex;gap:6px;flex-wrap:wrap;"></span>
           </div>
           <div class="receipt-line" style="margin-top:8px;"><span>รวมซื้อของอื่นๆ</span><span class="amt" id="sum-purchases">฿0.00</span></div>
+          <p class="empty-note" style="margin:8px 0 0;line-height:1.5;">กติกาการกรอก: ช่องนี้ใช้เฉพาะเงินที่<b>จ่ายแยก</b>จากก้อนที่ให้ไปตลาด (เช่น ซื้อเพิ่มที่ร้านค้า/แม็คโคร) ถ้าเป็นของที่ซื้อด้วยเงินก้อนตลาด <b>ไม่ต้องกรอกซ้ำ</b> เพราะจะทำให้ต้นทุนวัตถุดิบเบิ้ล</p>
+          <div id="market-dup-warn" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:#fff4e5;border:1px solid #e8912d;color:#8a5a12;font-size:13px;line-height:1.5;"></div>
 
           <div class="receipt-line total" style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px;">
             <span>รวมรายจ่ายวันนี้</span><span class="amt rust" id="sum-expenses">฿0.00</span>
@@ -357,7 +359,7 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
         <div><label class="field">จำนวนเงิน</label><input type="number" id="pe-amount" step="0.01" placeholder="0.00"></div>
       </div>
       <div class="section-gap"><label class="field">หมายเหตุ</label><input type="text" id="pe-note" placeholder="เช่น บิลเดือน ก.ค."></div>
-      <div class="section-gap"><button class="primary" id="btn-add-periodic">+ เพิ่มรายการ</button></div>
+      <div class="section-gap row-inline" style="gap:8px;"><button class="primary" id="btn-add-periodic">+ เพิ่มรายการ</button><button class="ghost" id="btn-cancel-periodic" style="display:none;">ยกเลิกการแก้ไข</button></div>
     </div>
 
     <div class="card">
@@ -400,7 +402,18 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
       <div class="tile"><div class="lbl">ยอดขายสุทธิรวม</div><div class="val teal" id="rep-sales">฿0.00</div></div>
       <div class="tile"><div class="lbl">รายจ่ายรวม</div><div class="val rust" id="rep-expenses">฿0.00</div></div>
       <div class="tile"><div class="lbl">กำไร/ขาดทุนสุทธิ</div><div class="val" id="rep-profit">฿0.00</div></div>
-      <div class="tile"><div class="lbl">เฉลี่ย/วัน</div><div class="val" id="rep-avg">฿0.00</div></div>
+      <div class="tile"><div class="lbl">กำไรเฉลี่ย/วันที่เปิดร้าน</div><div class="val" id="rep-avg">฿0.00</div><div class="sub" id="rep-avg-sub" style="font-size:12px;color:#8a857c;margin-top:4px;">—</div></div>
+    </div>
+
+    <div class="card" id="cost-structure-card">
+      <h3>โครงสร้างต้นทุน — คิดเป็น % ของยอดขาย<button class="export-img-btn" id="btn-export-cost-img">📷 บันทึกเป็นรูปภาพ</button></h3>
+      <p class="empty-note" style="margin:0 0 10px;">ทุกตัวเลขคิดจาก <b>ยอดขายสุทธิ</b> ในช่วงที่เลือก · แท่งสีคือเกณฑ์ร้านอาหารทั่วไป</p>
+      <table class="data">
+        <thead><tr><th>รายการ</th><th class="num">จำนวนเงิน</th><th class="num">% ยอดขาย</th><th>สัดส่วน</th><th>เกณฑ์ดี</th></tr></thead>
+        <tbody id="cost-struct-body"></tbody>
+      </table>
+      <div id="cost-verdict" style="margin-top:14px;"></div>
+      <div class="canvas-wrap" style="margin-top:14px;"><canvas id="chart-cost-donut"></canvas></div>
     </div>
 
     <div class="card">
@@ -411,7 +424,7 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
     <div class="card" id="report-table-card">
       <h3>รายละเอียดตามวัน<button class="export-img-btn" id="btn-export-report-img">📷 บันทึกเป็นรูปภาพ</button></h3>
       <table class="data" id="report-body-table">
-        <thead><tr><th>วันที่</th><th class="num">ยอดขายสุทธิ</th><th class="num">รายจ่าย</th><th class="num">กำไร/ขาดทุน</th></tr></thead>
+        <thead><tr><th>วันที่</th><th class="num">ยอดขายสุทธิ</th><th class="num">รายจ่าย</th><th class="num">กำไร/ขาดทุน</th><th class="num">% รายจ่าย</th><th class="num">% กำไร</th></tr></thead>
         <tbody id="report-body"></tbody>
       </table>
     </div>
@@ -458,6 +471,23 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
       <div id="category-preset-list" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"></div>
     </div>
 
+    <div class="card">
+      <h3>เกณฑ์ % ต้นทุนของร้านคุณ</h3>
+      <p class="empty-note" style="margin:0 0 10px;line-height:1.6;">กำหนดเองได้ว่าแต่ละรายการ<b>ไม่ควรเกิน</b>กี่ % หรือ<b>ไม่ควรต่ำกว่า</b>กี่ % ของยอดขายสุทธิ ค่าที่ตั้งจะถูกใช้กับป้ายสถานะ แท่งสี กล่องคำแนะนำ และการ์ดสรุป % ทั้งหมด · บันทึกขึ้น Firebase ใช้ร่วมกันทุกเครื่อง</p>
+      <div id="bench-grid"></div>
+      <div class="row-inline" style="gap:8px;margin-top:14px;">
+        <button class="primary" id="btn-save-bench">💾 บันทึกเกณฑ์</button>
+        <button class="ghost" id="btn-reset-bench">คืนค่ามาตรฐานร้านอาหาร</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>สำรองข้อมูล</h3>
+      <p class="empty-note" style="margin:0 0 10px;line-height:1.6;">ดาวน์โหลดข้อมูลทั้งหมดของระบบบัญชี (บันทึกรายวัน + ค่าใช้จ่ายประจำ + พรีเซต) เป็นไฟล์ JSON เก็บไว้ในเครื่อง แนะนำให้ทำ<b>เดือนละครั้ง</b></p>
+      <button class="primary" id="btn-backup-json">⬇ ดาวน์โหลดสำรองข้อมูล (JSON)</button>
+      <span id="backup-status" class="empty-note" style="margin-left:10px;"></span>
+    </div>
+
     <div class="danger-zone">
       <h4>⚠ โซนอันตราย</h4>
       <p>ปุ่มนี้จะลบข้อมูล<b>เฉพาะในห้อง restaurant_pos_v1</b> เท่านั้น (บันทึกรายวัน + ค่าใช้จ่ายประจำ + พรีเซต) จะไม่กระทบข้อมูลอื่นในฐานข้อมูล Firebase ของคุณอย่างแน่นอน แต่ไม่สามารถกู้คืนได้ ต้องพิมพ์คำว่า <code>ลบข้อมูล</code> เพื่อยืนยัน</p>
@@ -495,6 +525,7 @@ const root = rtdb.ref(APP_ROOT);
 const refDaily = (date) => root.child('daily/' + date);
 const refPeriodic = root.child('periodic_expenses');
 const refPresets = root.child('presets');
+const refBench = root.child('benchmarks');
 
 /* connection indicator */
 rtdb.ref('.info/connected').on('value', snap => {
@@ -533,6 +564,20 @@ function toast(msg) {
   window._toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function esc(t) {
+  return String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function pctOf(part, whole) {
+  whole = Number(whole) || 0;
+  if (whole <= 0) return null;
+  return (Number(part) || 0) / whole * 100;
+}
+function pctTxt(part, whole, digits) {
+  const p = pctOf(part, whole);
+  return p === null ? '–' : p.toFixed(digits == null ? 1 : digits) + '%';
+}
 function dateRangeDays(from, to) {
   const out = []; let cur = new Date(from + 'T00:00:00'); const end = new Date(to + 'T00:00:00');
   while (cur <= end) { out.push(ymd(cur)); cur.setDate(cur.getDate()+1); }
@@ -634,7 +679,7 @@ function renderPurchases() {
     const div = document.createElement('div');
     div.className = 'dyn-row';
     div.innerHTML = `
-      <input type="text" placeholder="ชื่อร้าน/รายการ" value="${row.vendor||''}" data-i="${i}" class="pu-vendor">
+      <input type="text" placeholder="ชื่อร้าน/รายการ" value="${esc(row.vendor||'')}" data-i="${i}" class="pu-vendor">
       <input type="number" step="0.01" placeholder="จำนวนเงิน" value="${row.amount??''}" data-i="${i}" class="pu-amt">
       <button class="rm" data-i="${i}">✕</button>`;
     wrap.appendChild(div);
@@ -658,52 +703,82 @@ function loadPresets() {
     renderPresetUI();
   });
 }
-function savePresets() { refPresets.set(presets); }
+function savePresets(branch) {
+  const payload = {};
+  if (branch === 'vendors' || branch === 'channels' || branch === 'categories') {
+    payload[branch] = presets[branch] || [];
+  } else {
+    payload.vendors = presets.vendors || [];
+    payload.channels = presets.channels || [];
+    payload.categories = presets.categories || [];
+  }
+  return refPresets.update(payload).catch(err => {
+    toast('บันทึกพรีเซตไม่สำเร็จ: ' + ((err && err.message) ? err.message : err));
+  });
+}
 
 function renderPresetUI() {
   // vendor quick chips on daily tab
   const vwrap = document.getElementById('vendor-presets');
-  vwrap.innerHTML = presets.vendors.map(v => `<span class="chip" data-v="${v}">+ ${v}</span>`).join('');
+  vwrap.innerHTML = presets.vendors.map(v => `<span class="chip" data-v="${esc(v)}">+ ${esc(v)}</span>`).join('');
   vwrap.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => addPurchase(c.dataset.v)));
 
   const hwrap = document.getElementById('halfhalf-presets');
-  hwrap.innerHTML = presets.channels.map(v => `<span class="chip" data-v="${v}">+ ${v}</span>`).join('');
+  hwrap.innerHTML = presets.channels.map(v => `<span class="chip" data-v="${esc(v)}">+ ${esc(v)}</span>`).join('');
   hwrap.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => addHalfHalf(c.dataset.v)));
 
   // settings tab lists
   const vl = document.getElementById('vendor-preset-list');
-  vl.innerHTML = presets.vendors.map(v => `<span class="chip">${v}<span class="chip-x" data-type="vendors" data-v="${v}">✕</span></span>`).join('') || '<span class="empty-note">ยังไม่มีพรีเซต</span>';
+  vl.innerHTML = presets.vendors.map(v => `<span class="chip">${esc(v)}<span class="chip-x" data-type="vendors" data-v="${esc(v)}">✕</span></span>`).join('') || '<span class="empty-note">ยังไม่มีพรีเซต</span>';
   const cl = document.getElementById('channel-preset-list');
-  cl.innerHTML = presets.channels.map(v => `<span class="chip">${v}<span class="chip-x" data-type="channels" data-v="${v}">✕</span></span>`).join('') || '<span class="empty-note">ยังไม่มีพรีเซต</span>';
+  cl.innerHTML = presets.channels.map(v => `<span class="chip">${esc(v)}<span class="chip-x" data-type="channels" data-v="${esc(v)}">✕</span></span>`).join('') || '<span class="empty-note">ยังไม่มีพรีเซต</span>';
   const gl = document.getElementById('category-preset-list');
-  gl.innerHTML = presets.categories.map(v => `<span class="chip">${v}<span class="chip-x" data-type="categories" data-v="${v}">✕</span></span>`).join('');
+  gl.innerHTML = presets.categories.map(v => `<span class="chip">${esc(v)}<span class="chip-x" data-type="categories" data-v="${esc(v)}">✕</span></span>`).join('');
 
   document.querySelectorAll('.chip-x').forEach(x => x.addEventListener('click', e => {
     const t = e.target.dataset.type, v = e.target.dataset.v;
     presets[t] = presets[t].filter(i => i !== v);
-    savePresets(); renderPresetUI(); populateCategorySelect();
+    savePresets(t); renderPresetUI(); populateCategorySelect();
   }));
   populateCategorySelect();
 }
 document.getElementById('btn-add-vendor').addEventListener('click', () => {
   const inp = document.getElementById('new-vendor'); const val = inp.value.trim();
   if (!val) return; if (!presets.vendors.includes(val)) presets.vendors.push(val);
-  savePresets(); renderPresetUI(); inp.value = '';
+  savePresets('vendors'); renderPresetUI(); inp.value = '';
 });
 document.getElementById('btn-add-channel').addEventListener('click', () => {
   const inp = document.getElementById('new-channel'); const val = inp.value.trim();
   if (!val) return; if (!presets.channels.includes(val)) presets.channels.push(val);
-  savePresets(); renderPresetUI(); inp.value = '';
+  savePresets('channels'); renderPresetUI(); inp.value = '';
 });
 document.getElementById('btn-add-category').addEventListener('click', () => {
   const inp = document.getElementById('new-category'); const val = inp.value.trim();
   if (!val) return; if (!presets.categories.includes(val)) presets.categories.push(val);
-  savePresets(); renderPresetUI(); inp.value = '';
+  savePresets('categories'); renderPresetUI(); inp.value = '';
 });
+document.getElementById('btn-save-bench').addEventListener('click', () => {
+  const { next, errs } = readBenchInputs();
+  if (errs.length) { toast('\u0e15\u0e31\u0e27\u0e40\u0e25\u0e02\u0e44\u0e21\u0e48\u0e16\u0e39\u0e01\u0e15\u0e49\u0e2d\u0e07: ' + errs[0]); return; }
+  COST_BENCH = next;
+  renderBenchUI();
+  refreshBenchViews();
+  persistBench()
+    .then(() => toast('\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e40\u0e01\u0e13\u0e11\u0e4c\u0e40\u0e23\u0e35\u0e22\u0e1a\u0e23\u0e49\u0e2d\u0e22 \u2714'))
+    .catch(err => toast('\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08: ' + ((err && err.message) ? err.message : err)));
+});
+document.getElementById('btn-reset-bench').addEventListener('click', () => {
+  if (!confirm('\u0e04\u0e37\u0e19\u0e40\u0e01\u0e13\u0e11\u0e4c\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\u0e40\u0e1b\u0e47\u0e19\u0e04\u0e48\u0e32\u0e21\u0e32\u0e15\u0e23\u0e10\u0e32\u0e19\u0e23\u0e49\u0e32\u0e19\u0e2d\u0e32\u0e2b\u0e32\u0e23?')) return;
+  COST_BENCH = JSON.parse(JSON.stringify(DEFAULT_BENCH));
+  renderBenchUI();
+  refreshBenchViews();
+  persistBench().then(() => toast('\u0e04\u0e37\u0e19\u0e04\u0e48\u0e32\u0e21\u0e32\u0e15\u0e23\u0e10\u0e32\u0e19\u0e41\u0e25\u0e49\u0e27'));
+});
+
 function populateCategorySelect() {
   const sel = document.getElementById('pe-category');
   const cur = sel.value;
-  sel.innerHTML = presets.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  sel.innerHTML = presets.categories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
   if (cur) sel.value = cur;
 }
 
@@ -742,6 +817,13 @@ function recalcAll() {
   document.getElementById('sum-halfhalf').textContent = fmt(halfhalfTotal);
   document.getElementById('sum-market-net').textContent = fmt(marketNet);
   document.getElementById('sum-purchases').textContent = fmt(purchasesTotal);
+  const dupWarn = document.getElementById('market-dup-warn');
+  if (dupWarn) {
+    if (marketGiven > 0 && purchasesTotal > 0) {
+      dupWarn.style.display = 'block';
+      dupWarn.innerHTML = '⚠ วันนี้กรอกทั้ง <b>เงินที่ให้ไปตลาด</b> (' + fmt(marketGiven) + ') และ <b>ซื้อของอื่นๆ</b> (' + fmt(purchasesTotal) + ') — ตรวจให้แน่ใจว่าไม่ใช่เงินก้อนเดียวกันที่กรอกซ้ำ';
+    } else { dupWarn.style.display = 'none'; dupWarn.innerHTML = ''; }
+  }
   document.getElementById('sum-expenses').textContent = fmt(totalExpenses);
 
   document.getElementById('r-cash').textContent = fmt(cashTotal);
@@ -834,6 +916,7 @@ document.getElementById('btn-save-daily').addEventListener('click', () => {
     notes: document.getElementById('in-notes').value,
     updatedAt: Date.now()
   };
+  invalidateDaily();
   refDaily(date).set(payload).then(() => toast('บันทึกข้อมูลวันที่ ' + date + ' เรียบร้อย ✔'))
     .catch(err => toast('เกิดข้อผิดพลาด: ' + err.message));
 });
@@ -841,7 +924,8 @@ document.getElementById('btn-save-daily').addEventListener('click', () => {
 document.getElementById('btn-delete-daily').addEventListener('click', () => {
   const date = dateInput.value;
   if (!confirm('ต้องการลบข้อมูลของวันที่ ' + date + ' ใช่หรือไม่? (ลบเฉพาะวันนี้เท่านั้น)')) return;
-  refDaily(date).remove().then(() => { toast('ลบข้อมูลวันที่ ' + date + ' แล้ว'); resetDailyForm(); recalcAll(); });
+  invalidateDaily();
+  refDaily(date).remove().then(() => { toast('ลบข้อมูลวันที่ ' + date + ' แล้ว'); resetDailyForm(); recalcAll(); renderDashboard(); });
 });
 
 /* ============================================================
@@ -850,17 +934,38 @@ document.getElementById('btn-delete-daily').addEventListener('click', () => {
 document.getElementById('pe-date').value = todayStr();
 document.getElementById('pe-filter-month').value = todayStr().slice(0,7);
 
+let peEditId = null;
+function peSyncButton() {
+  const btn = document.getElementById('btn-add-periodic');
+  const cancel = document.getElementById('btn-cancel-periodic');
+  if (btn) btn.textContent = peEditId ? '💾 บันทึกการแก้ไข' : '+ เพิ่มรายการ';
+  if (cancel) cancel.style.display = peEditId ? 'inline-block' : 'none';
+}
+function peClearForm() {
+  peEditId = null;
+  document.getElementById('pe-amount').value = '';
+  document.getElementById('pe-note').value = '';
+  peSyncButton();
+}
 document.getElementById('btn-add-periodic').addEventListener('click', () => {
-  const category = document.getElementById('pe-category').value;
+  const category = (document.getElementById('pe-category').value || '').trim();
   const date = document.getElementById('pe-date').value;
   const amount = parseFloat(document.getElementById('pe-amount').value) || 0;
   const note = document.getElementById('pe-note').value.trim();
+  if (!category) { toast('กรุณาเลือกหมวดค่าใช้จ่าย (เพิ่มหมวดได้ที่แท็บตั้งค่า)'); return; }
   if (!date || amount <= 0) { toast('กรุณาระบุวันที่และจำนวนเงิน'); return; }
-  refPeriodic.push({ category, date, amount, note, createdAt: Date.now() }).then(() => {
-    toast('เพิ่มค่าใช้จ่ายประจำแล้ว');
-    document.getElementById('pe-amount').value = ''; document.getElementById('pe-note').value = '';
+  const editing = peEditId;
+  const op = editing
+    ? refPeriodic.child(editing).update({ category, date, amount, note })
+    : refPeriodic.push({ category, date, amount, note, createdAt: Date.now() });
+  Promise.resolve(op).then(() => {
+    toast(editing ? 'แก้ไขรายการเรียบร้อย ✔' : 'เพิ่มค่าใช้จ่ายประจำแล้ว');
+    peClearForm();
     renderPeriodicList();
-  });
+  }).catch(err => toast('บันทึกไม่สำเร็จ: ' + ((err && err.message) ? err.message : err)));
+});
+document.getElementById('btn-cancel-periodic').addEventListener('click', () => {
+  peClearForm(); toast('ยกเลิกการแก้ไขแล้ว');
 });
 
 let periodicCache = {};
@@ -869,17 +974,42 @@ function renderPeriodicList() {
     periodicCache = snap.val() || {};
     const month = document.getElementById('pe-filter-month').value;
     const body = document.getElementById('periodic-body');
-    const entries = Object.entries(periodicCache).filter(([id,e]) => !month || e.date.startsWith(month));
+    const entries = Object.entries(periodicCache)
+      .filter(([id,e]) => e && typeof e === 'object' && typeof e.date === 'string')
+      .filter(([id,e]) => !month || e.date.startsWith(month));
     entries.sort((a,b) => b[1].date.localeCompare(a[1].date));
     let total = 0;
     body.innerHTML = entries.map(([id,e]) => {
-      total += e.amount;
-      return `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.note||'-'}</td><td class="num">${fmt(e.amount)}</td>
-        <td><button class="rm-pe small" data-id="${id}" style="color:var(--rust);border:none;background:none;cursor:pointer;">✕</button></td></tr>`;
+      total += Number(e.amount) || 0;
+      return `<tr${peEditId === id ? ' style="background:#fff9e8;"' : ''}><td>${esc(e.date)}</td><td>${esc(e.category||'-')}</td><td>${esc(e.note||'-')}</td><td class="num">${fmt(Number(e.amount)||0)}</td>
+        <td style="white-space:nowrap;"><button class="ed-pe small" data-id="${id}" title="แก้ไข" style="color:var(--teal-dark);border:none;background:none;cursor:pointer;">✎</button><button class="rm-pe small" data-id="${id}" title="ลบ" style="color:var(--rust);border:none;background:none;cursor:pointer;">✕</button></td></tr>`;
     }).join('') || '<tr><td colspan="5" class="empty-note">ไม่มีรายการในเดือนนี้</td></tr>';
     document.getElementById('periodic-month-total').textContent = fmt(total);
     body.querySelectorAll('.rm-pe').forEach(b => b.addEventListener('click', e => {
-      if (confirm('ลบรายการนี้?')) refPeriodic.child(e.target.dataset.id).remove().then(renderPeriodicList);
+      const id = e.target.dataset.id;
+      if (!confirm('ลบรายการนี้?')) return;
+      if (peEditId === id) peClearForm();
+      refPeriodic.child(id).remove().then(renderPeriodicList);
+    }));
+    body.querySelectorAll('.ed-pe').forEach(b => b.addEventListener('click', e => {
+      const id = e.target.dataset.id;
+      const rec = periodicCache[id];
+      if (!rec) { toast('ไม่พบรายการนี้'); return; }
+      peEditId = id;
+      populateCategorySelect();
+      const sel = document.getElementById('pe-category');
+      const cat = (rec.category || '').trim();
+      if (cat && !Array.from(sel.options).some(o => o.value === cat)) {
+        const o = document.createElement('option'); o.value = cat; o.textContent = cat; sel.appendChild(o);
+      }
+      sel.value = cat;
+      document.getElementById('pe-date').value = rec.date || todayStr();
+      document.getElementById('pe-amount').value = Number(rec.amount) || 0;
+      document.getElementById('pe-note').value = rec.note || '';
+      peSyncButton();
+      renderPeriodicList();
+      document.getElementById('pe-amount').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      toast('กำลังแก้ไขรายการ — กดบันทึกการแก้ไขเมื่อเสร็จ');
     }));
   });
 }
@@ -889,7 +1019,22 @@ document.getElementById('pe-filter-month').addEventListener('change', renderPeri
    DASHBOARD
 ============================================================ */
 let dailyCache = {};
-function loadAllDaily() { return root.child('daily').once('value').then(snap => { dailyCache = snap.val() || {}; return dailyCache; }); }
+let _dailyPromise = null, _dailyLoadedAt = 0;
+const DAILY_TTL_MS = 20000;
+function invalidateDaily() { _dailyPromise = null; _dailyLoadedAt = 0; }
+function loadAllDaily(force) {
+  const now = Date.now();
+  if (!force && _dailyPromise && (now - _dailyLoadedAt) < DAILY_TTL_MS) return _dailyPromise;
+  _dailyLoadedAt = now;
+  _dailyPromise = root.child('daily').once('value')
+    .then(snap => { dailyCache = snap.val() || {}; return dailyCache; })
+    .catch(err => {
+      invalidateDaily();
+      toast('โหลดข้อมูลรายวันไม่สำเร็จ: ' + ((err && err.message) ? err.message : err));
+      return dailyCache;
+    });
+  return _dailyPromise;
+}
 
 function renderDashboard() {
   Promise.all([loadAllDaily(), refPeriodic.once('value')]).then(([daily, peSnap]) => {
@@ -905,15 +1050,24 @@ function renderDashboard() {
 
     // pending คนละครึ่ง across last 60 days
     let pendingTotal = 0, pendingCount = 0, pendingItems = [];
+    const pendCut = new Date(); pendCut.setDate(pendCut.getDate() - 90);
+    const pendCutStr = ymd(pendCut);
     Object.entries(daily).forEach(([date, rec]) => {
-      (rec.halfHalf||[]).forEach(h => { if (!h.received && h.amount>0) { pendingTotal += h.amount; pendingCount++; pendingItems.push({date, ...h}); } });
+      if (!rec || typeof rec !== 'object') return;
+      if (typeof date !== 'string' || date < pendCutStr) return;
+      const hh = Array.isArray(rec.halfHalf) ? rec.halfHalf : [];
+      hh.forEach(h => {
+        if (!h || typeof h !== 'object') return;
+        const amt = Number(h.amount) || 0;
+        if (!h.received && amt > 0) { pendingTotal += amt; pendingCount++; pendingItems.push({date, channel: h.channel, amount: amt}); }
+      });
     });
     document.getElementById('dash-pending').textContent = fmt(pendingTotal);
     document.getElementById('dash-pending-count').textContent = pendingCount + ' รายการ';
     const pl = document.getElementById('pending-list');
     pendingItems.sort((a,b)=>b.date.localeCompare(a.date));
     pl.innerHTML = pendingItems.length ? pendingItems.slice(0,10).map(it =>
-      `<div class="pending-item"><span>${it.date} — ${it.channel||'ไม่ระบุช่องทาง'}</span><span class="badge">${fmt(it.amount)}</span></div>`
+      `<div class="pending-item"><span>${esc(it.date)} — ${esc(it.channel||'ไม่ระบุช่องทาง')}</span><span class="badge">${fmt(it.amount)}</span></div>`
     ).join('') : '<div class="empty-note">ไม่มีรายการค้างรับ 🎉</div>';
 
     // month summary
@@ -921,7 +1075,7 @@ function renderDashboard() {
     let monthSales=0, monthDailyExp=0;
     Object.entries(daily).forEach(([date,rec]) => { if (date.startsWith(curMonth)) { monthSales += rec.netSales||0; monthDailyExp += rec.totalExpenses||0; } });
     let monthPeriodic = 0;
-    Object.values(periodic).forEach(e => { if (e.date.startsWith(curMonth)) monthPeriodic += e.amount; });
+    Object.values(periodic).forEach(e => { if (e && typeof e.date === 'string' && e.date.startsWith(curMonth)) monthPeriodic += Number(e.amount) || 0; });
     document.getElementById('dash-month-sales').textContent = fmt(monthSales);
     document.getElementById('dash-month-daily-exp').textContent = fmt(monthDailyExp);
     document.getElementById('dash-month-periodic-exp').textContent = fmt(monthPeriodic);
@@ -942,6 +1096,11 @@ function renderDashboard() {
     let cCash=0,cTransfer=0,cHalf=0;
     days30.forEach(d => { const r = daily[d]; if (r) { cCash+=r.cashTotal||0; cTransfer+=r.transfer||0; cHalf+=r.halfhalfTotal||0; } });
     drawDonut('chart-channels', ['เงินสด','เงินโอน','คนละครึ่ง'], [cCash,cTransfer,cHalf], ['#0F6B5C','#C98A25','#C1533A']);
+
+    // สัดส่วน % ของเดือนนี้ (แบบย่อ)
+    const mStart = curMonth + '-01';
+    const mEnd = curMonth + '-' + String(new Date(Number(curMonth.slice(0,4)), Number(curMonth.slice(5,7)), 0).getDate()).padStart(2,'0');
+    renderCostMini(computePeriodTotals(mStart, mEnd, daily, periodic));
   });
 }
 
@@ -1001,14 +1160,46 @@ function getReportRange() {
 function computePeriodTotals(from, to, daily, periodic) {
   const days = dateRangeDays(from, to);
   let sales=0, dailyExp=0, rows=[];
+  let labor=0, rent=0, market=0, purchases=0, cash=0, transfer=0, half=0, activeDays=0;
   days.forEach(d => {
     const r = daily[d];
-    sales += r?.netSales || 0; dailyExp += r?.totalExpenses || 0;
-    rows.push({ date:d, sales:r?.netSales||0, exp:r?.totalExpenses||0, profit:(r?.netSales||0)-(r?.totalExpenses||0) });
+    const ns = r?.netSales || 0;
+    const ex = r?.totalExpenses || 0;
+    sales += ns; dailyExp += ex;
+    if (r) {
+      labor     += Number(r.labor) || 0;
+      rent      += Number(r.rent) || 0;
+      market    += (r.marketNet != null) ? (Number(r.marketNet) || 0)
+                 : ((Number(r.marketGiven)||0) - (Number(r.marketReturn)||0));
+      purchases += Number(r.purchasesTotal) || 0;
+      cash      += Number(r.cashTotal) || 0;
+      transfer  += Number(r.transfer) || 0;
+      half      += Number(r.halfhalfTotal) || 0;
+      if (ns !== 0 || ex !== 0) activeDays++;
+    }
+    rows.push({ date:d, sales:ns, exp:ex, profit:ns-ex });
   });
+
   let periodicExp = 0;
-  Object.values(periodic).forEach(e => { if (e.date >= from && e.date <= to) periodicExp += e.amount; });
-  return { sales, expenses: dailyExp + periodicExp, dailyExp, periodicExp, profit: sales - dailyExp - periodicExp, rows, days };
+  const periodicByCat = {};
+  Object.values(periodic || {}).forEach(e => {
+    if (!e || typeof e.date !== 'string') return;
+    if (e.date < from || e.date > to) return;
+    const amt = Number(e.amount) || 0;
+    periodicExp += amt;
+    const cat = (e.category || 'ไม่ระบุหมวด').trim();
+    periodicByCat[cat] = (periodicByCat[cat] || 0) + amt;
+  });
+
+  const expenses = dailyExp + periodicExp;
+  const foodCost = market + purchases;
+  return {
+    sales, expenses, dailyExp, periodicExp,
+    profit: sales - expenses,
+    rows, days, activeDays,
+    breakdown: { labor, rent, market, purchases, foodCost, periodicByCat, periodicExp },
+    channels: { cash, transfer, half }
+  };
 }
 
 function runReport() {
@@ -1020,7 +1211,14 @@ function runReport() {
     document.getElementById('rep-expenses').textContent = fmt(res.expenses);
     const profitEl = document.getElementById('rep-profit');
     profitEl.textContent = fmt(res.profit); profitEl.className = 'val ' + (res.profit>=0?'teal':'rust');
-    document.getElementById('rep-avg').textContent = fmt(res.profit / Math.max(res.days.length,1));
+    const actDays = Math.max(res.activeDays || 0, 0);
+    const denomDays = Math.max(actDays, 1);
+    document.getElementById('rep-avg').textContent = fmt(res.profit / denomDays);
+    const avgSub = document.getElementById('rep-avg-sub');
+    if (avgSub) {
+      avgSub.innerHTML = 'ยอดขายเฉลี่ย ' + fmt(res.sales / denomDays) + '/วัน · เปิดร้าน ' + actDays + ' จาก ' + res.days.length + ' วันในช่วงนี้'
+        + (actDays < res.days.length ? ' <span style="color:#e8912d;">(มีวันที่ยังไม่กรอก)</span>' : '');
+    }
 
     drawChart('chart-report', 'line', res.rows.map(r=>r.date.slice(5)), [
       { label:'ยอดขายสุทธิ', data: res.rows.map(r=>r.sales), color:'#0F6B5C' },
@@ -1028,10 +1226,13 @@ function runReport() {
     ]);
 
     const body = document.getElementById('report-body');
-    body.innerHTML = res.rows.map(r => `<tr><td>${r.date}</td><td class="num">${fmt(r.sales)}</td><td class="num">${fmt(r.exp)}</td>
-      <td class="num" style="color:${r.profit>=0?'var(--teal-dark)':'var(--rust)'}">${fmt(r.profit)}</td></tr>`).join('')
-      || '<tr><td colspan="4" class="empty-note">ไม่มีข้อมูล</td></tr>';
+    body.innerHTML = res.rows.map(r => `<tr><td>${esc(r.date)}</td><td class="num">${fmt(r.sales)}</td><td class="num">${fmt(r.exp)}</td>
+      <td class="num" style="color:${r.profit>=0?'var(--teal-dark)':'var(--rust)'}">${fmt(r.profit)}</td>
+      <td class="num">${pctTxt(r.exp, r.sales)}</td>
+      <td class="num" style="color:${r.profit>=0?'var(--teal-dark)':'var(--rust)'}">${pctTxt(r.profit, r.sales)}</td></tr>`).join('')
+      || '<tr><td colspan="6" class="empty-note">ไม่มีข้อมูล</td></tr>';
 
+    renderCostStructure(res);
     window._lastReport = res;
   });
 }
@@ -1052,6 +1253,12 @@ document.getElementById('btn-run-compare').addEventListener('click', () => {
           <tr><td>ยอดขายสุทธิ</td><td class="num">${fmt(A.sales)}</td><td class="num">${fmt(B.sales)}</td><td class="num">${pct(A.sales,B.sales)}%</td></tr>
           <tr><td>รายจ่ายรวม</td><td class="num">${fmt(A.expenses)}</td><td class="num">${fmt(B.expenses)}</td><td class="num">${pct(A.expenses,B.expenses)}%</td></tr>
           <tr><td>กำไร/ขาดทุน</td><td class="num">${fmt(A.profit)}</td><td class="num">${fmt(B.profit)}</td><td class="num">${pct(A.profit,B.profit)}%</td></tr>
+          <tr><td colspan="4" style="background:#faf9f7;font-weight:600;">สัดส่วนต่อยอดขาย (%)</td></tr>
+          <tr><td>ค่าแรง</td><td class="num">${pctTxt(A.breakdown.labor,A.sales)}</td><td class="num">${pctTxt(B.breakdown.labor,B.sales)}</td><td class="num">${ppDiff(A.breakdown.labor,A.sales,B.breakdown.labor,B.sales)}</td></tr>
+          <tr><td>ต้นทุนวัตถุดิบ (ตลาด+ร้านค้า)</td><td class="num">${pctTxt(A.breakdown.foodCost,A.sales)}</td><td class="num">${pctTxt(B.breakdown.foodCost,B.sales)}</td><td class="num">${ppDiff(A.breakdown.foodCost,A.sales,B.breakdown.foodCost,B.sales)}</td></tr>
+          <tr><td>ค่าเช่า/ที่พักลูกน้อง</td><td class="num">${pctTxt(A.breakdown.rent,A.sales)}</td><td class="num">${pctTxt(B.breakdown.rent,B.sales)}</td><td class="num">${ppDiff(A.breakdown.rent,A.sales,B.breakdown.rent,B.sales)}</td></tr>
+          <tr><td>ค่าใช้จ่ายประจำ/อื่นๆ</td><td class="num">${pctTxt(A.breakdown.periodicExp,A.sales)}</td><td class="num">${pctTxt(B.breakdown.periodicExp,B.sales)}</td><td class="num">${ppDiff(A.breakdown.periodicExp,A.sales,B.breakdown.periodicExp,B.sales)}</td></tr>
+          <tr><td><b>อัตรากำไรสุทธิ</b></td><td class="num">${pctTxt(A.profit,A.sales)}</td><td class="num">${pctTxt(B.profit,B.sales)}</td><td class="num">${ppDiff(A.profit,A.sales,B.profit,B.sales)}</td></tr>
         </tbody>
       </table>`;
   });
@@ -1060,8 +1267,31 @@ document.getElementById('btn-run-compare').addEventListener('click', () => {
 document.getElementById('btn-export-csv').addEventListener('click', () => {
   const res = window._lastReport;
   if (!res) { toast('กรุณากด "แสดงรายงาน" ก่อน'); return; }
-  let csv = 'วันที่,ยอดขายสุทธิ,รายจ่าย,กำไรขาดทุน\n';
-  res.rows.forEach(r => { csv += `${r.date},${r.sales},${r.exp},${r.profit}\n`; });
+  let csv = 'วันที่,ยอดขายสุทธิ,รายจ่าย,กำไรขาดทุน,% รายจ่าย,% กำไร\n';
+  res.rows.forEach(r => {
+    const pe = pctOf(r.exp, r.sales), pp = pctOf(r.profit, r.sales);
+    csv += `${r.date},${r.sales},${r.exp},${r.profit},${pe===null?'':pe.toFixed(1)},${pp===null?'':pp.toFixed(1)}\n`;
+  });
+  const b = res.breakdown || {};
+  csv += '\nสรุปโครงสร้างต้นทุน,จำนวนเงิน,% ยอดขาย\n';
+  const lines = [
+    ['ค่าแรง', b.labor],
+    ['ซื้อของตลาด (สุทธิ)', b.market],
+    ['ซื้อของเพิ่มเติม/ร้านค้า', b.purchases],
+    ['รวมต้นทุนวัตถุดิบ', b.foodCost],
+    ['ค่าเช่า/ที่พักลูกน้อง', b.rent],
+    ['ค่าใช้จ่ายประจำ', b.periodicExp],
+    ['รายจ่ายรวม', res.expenses],
+    ['กำไรสุทธิ', res.profit]
+  ];
+  lines.forEach(([k,v]) => {
+    const p = pctOf(v, res.sales);
+    csv += `${k},${Number(v)||0},${p===null?'':p.toFixed(1)}\n`;
+  });
+  Object.entries(b.periodicByCat || {}).forEach(([k,v]) => {
+    const p = pctOf(v, res.sales);
+    csv += `  └ ${String(k).replace(/,/g,' ')},${v},${p===null?'':p.toFixed(1)}\n`;
+  });
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'รายงาน-' + todayStr() + '.csv'; a.click();
 });
@@ -1072,8 +1302,10 @@ document.getElementById('btn-export-csv').addEventListener('click', () => {
 document.getElementById('btn-wipe').addEventListener('click', () => {
   const txt = document.getElementById('confirm-wipe-text').value.trim();
   if (txt !== 'ลบข้อมูล') { toast('กรุณาพิมพ์ "ลบข้อมูล" ให้ถูกต้องก่อน'); return; }
+  if (!window._backupDone) { toast('เพื่อความปลอดภัย ต้องกด "ดาวน์โหลดสำรองข้อมูล (JSON)" ก่อนจึงจะลบได้'); return; }
   if (!confirm('ยืนยันอีกครั้ง: ลบข้อมูลทั้งหมดใน restaurant_pos_v1? การกระทำนี้ย้อนกลับไม่ได้')) return;
   root.remove().then(() => {
+    window._backupDone = false;
     toast('ลบข้อมูลระบบบัญชีร้านอาหารเรียบร้อย (ข้อมูลระบบอื่นไม่ถูกกระทบ)');
     document.getElementById('confirm-wipe-text').value = '';
     presets = { vendors:[], channels:[], categories:['ค่าน้ำ','ค่าไฟ','ค่าอินเทอร์เน็ต','ค่าใช้จ่ายอื่นๆ'] };
@@ -1103,13 +1335,543 @@ document.getElementById('btn-export-report-img').addEventListener('click', () =>
   });
 });
 
+
+/* ============================================================
+   COST STRUCTURE (% OF SALES)  — หัวใจของการวิเคราะห์เชิงลึก
+============================================================ */
+// เกณฑ์มาตรฐานธุรกิจร้านอาหาร (% ของยอดขายสุทธิ)
+const DEFAULT_BENCH = {
+  labor:    { lo: 15, hi: 25 },
+  foodCost: { lo: 28, hi: 38 },
+  rent:     { lo: 0,  hi: 10 },
+  periodic: { lo: 0,  hi: 10 },
+  prime:    { lo: 0,  hi: 65 },
+  expenses: { lo: 0,  hi: 85 },
+  profit:   { lo: 10, hi: 100 }
+};
+
+// mode: range = มีทั้งขั้นต่ำ/ขั้นสูง | max = ไม่ควรเกิน | min = ไม่ควรต่ำกว่า
+const BENCH_META = {
+  labor:    { name: '🧑‍🍳 ค่าแรงลูกน้อง', mode: 'range', hint: 'ร้านอาหารทั่วไป 15–25%' },
+  foodCost: { name: '🥕 ต้นทุนวัตถุดิบ (ตลาด+ร้านค้า)', mode: 'range', hint: 'ร้านอาหารทั่วไป 28–38%' },
+  rent:     { name: '🏠 ค่าเช่า/ที่พักลูกน้อง', mode: 'max', hint: 'ไม่ควรเกิน 10%' },
+  periodic: { name: '💧 ค่าใช้จ่ายประจำ/เล็กๆ น้อยๆ', mode: 'max', hint: 'ไม่ควรเกิน 10%' },
+  prime:    { name: '⚡ Prime Cost (ค่าแรง + วัตถุดิบ)', mode: 'max', hint: 'ตัวเลขชี้ชะตาสุด ไม่ควรเกิน 65%' },
+  expenses: { name: '📉 รายจ่ายรวมทั้งหมด', mode: 'max', hint: 'ไม่ควรเกิน 85%' },
+  profit:   { name: '💰 กำไรสุทธิ (Net Margin)', mode: 'min', hint: 'ควรได้อย่างน้อย 10%' }
+};
+
+let COST_BENCH = JSON.parse(JSON.stringify(DEFAULT_BENCH));
+const BENCH_LS_KEY = 'restaurant_bench_v1';
+
+function benchNum(x) { return Math.round((Number(x) || 0) * 10) / 10; }
+
+function benchLabel(key) {
+  const b = COST_BENCH[key];
+  if (!b) return '';
+  const m = BENCH_META[key] || {};
+  if (m.mode === 'min') return '≥ ' + benchNum(b.lo) + '%';
+  if (m.mode === 'range' && Number(b.lo) > 0) return benchNum(b.lo) + '–' + benchNum(b.hi) + '%';
+  return '≤ ' + benchNum(b.hi) + '%';
+}
+
+function applyBench(raw) {
+  if (!raw || typeof raw !== 'object') return;
+  Object.keys(DEFAULT_BENCH).forEach(k => {
+    const src = raw[k];
+    if (!src || typeof src !== 'object') return;
+    const lo = Number(src.lo), hi = Number(src.hi);
+    if (isFinite(lo) && lo >= 0 && lo <= 100) COST_BENCH[k].lo = lo;
+    if (isFinite(hi) && hi >= 0 && hi <= 1000) COST_BENCH[k].hi = hi;
+    if (COST_BENCH[k].hi < COST_BENCH[k].lo) COST_BENCH[k].hi = COST_BENCH[k].lo;
+  });
+}
+
+function loadBench() {
+  try {
+    const cached = localStorage.getItem(BENCH_LS_KEY);
+    if (cached) applyBench(JSON.parse(cached));
+  } catch (e) {}
+  renderBenchUI();
+  return refBench.once('value').then(snap => {
+    const v = snap.val();
+    if (v) {
+      applyBench(v);
+      try { localStorage.setItem(BENCH_LS_KEY, JSON.stringify(COST_BENCH)); } catch (e) {}
+    }
+    renderBenchUI();
+    refreshBenchViews();
+  }).catch(() => { renderBenchUI(); });
+}
+
+function refreshBenchViews() {
+  if (typeof renderDashboard === 'function') renderDashboard();
+  if (window._lastReport) renderCostStructure(window._lastReport);
+}
+
+function renderBenchUI() {
+  const wrap = document.getElementById('bench-grid');
+  if (!wrap) return;
+  wrap.innerHTML = Object.keys(BENCH_META).map(k => {
+    const m = BENCH_META[k], b = COST_BENCH[k];
+    let inputs = '';
+    if (m.mode === 'range') {
+      inputs = `<div class="row-inline" style="gap:6px;align-items:center;">
+        <span style="font-size:12px;color:#8a857c;">ต่ำสุด</span>
+        <input type="number" step="0.5" min="0" max="100" id="bench-${k}-lo" value="${benchNum(b.lo)}" style="width:80px;">
+        <span style="font-size:12px;color:#8a857c;">สูงสุด</span>
+        <input type="number" step="0.5" min="0" max="100" id="bench-${k}-hi" value="${benchNum(b.hi)}" style="width:80px;">
+        <span style="font-size:12px;color:#8a857c;">%</span></div>`;
+    } else if (m.mode === 'max') {
+      inputs = `<div class="row-inline" style="gap:6px;align-items:center;">
+        <span style="font-size:12px;color:#8a857c;">ไม่เกิน</span>
+        <input type="number" step="0.5" min="0" max="100" id="bench-${k}-hi" value="${benchNum(b.hi)}" style="width:80px;">
+        <span style="font-size:12px;color:#8a857c;">%</span></div>`;
+    } else {
+      inputs = `<div class="row-inline" style="gap:6px;align-items:center;">
+        <span style="font-size:12px;color:#8a857c;">ไม่ต่ำกว่า</span>
+        <input type="number" step="0.5" min="0" max="100" id="bench-${k}-lo" value="${benchNum(b.lo)}" style="width:80px;">
+        <span style="font-size:12px;color:#8a857c;">%</span></div>`;
+    }
+    return `<div style="padding:10px 0;border-bottom:1px solid #eee9e1;">
+      <div style="font-weight:600;font-size:14px;margin-bottom:2px;">${esc(m.name)}</div>
+      <div style="font-size:12px;color:#8a857c;margin-bottom:6px;">ตอนนี้: <b>${esc(benchLabel(k))}</b> · คำแนะนำ: ${esc(m.hint)}</div>
+      ${inputs}
+    </div>`;
+  }).join('');
+}
+
+function readBenchInputs() {
+  const next = JSON.parse(JSON.stringify(COST_BENCH));
+  const errs = [];
+  Object.keys(BENCH_META).forEach(k => {
+    const m = BENCH_META[k];
+    const loEl = document.getElementById('bench-' + k + '-lo');
+    const hiEl = document.getElementById('bench-' + k + '-hi');
+    if (loEl) {
+      const v = parseFloat(loEl.value);
+      if (!isFinite(v) || v < 0 || v > 100) { errs.push(m.name); return; }
+      next[k].lo = v;
+    } else { next[k].lo = 0; }
+    if (hiEl) {
+      const v = parseFloat(hiEl.value);
+      if (!isFinite(v) || v < 0 || v > 100) { errs.push(m.name); return; }
+      next[k].hi = v;
+    } else if (m.mode === 'min') { next[k].hi = 100; }
+    if (m.mode === 'range' && next[k].hi < next[k].lo) errs.push(m.name + ' (ขั้นสูงต้องมากกว่าขั้นต่ำ)');
+  });
+  return { next, errs };
+}
+
+function persistBench() {
+  try { localStorage.setItem(BENCH_LS_KEY, JSON.stringify(COST_BENCH)); } catch (e) {}
+  const payload = {};
+  Object.keys(DEFAULT_BENCH).forEach(k => { payload[k] = { lo: COST_BENCH[k].lo, hi: COST_BENCH[k].hi }; });
+  return refBench.update(payload);
+}
+
+function ppDiff(aPart, aWhole, bPart, bWhole) {
+  const a = pctOf(aPart, aWhole), b = pctOf(bPart, bWhole);
+  if (a === null || b === null) return '\u2013';
+  const d = a - b;
+  return (d >= 0 ? '+' : '') + d.toFixed(1) + ' pp';
+}
+
+function benchTag(key, p) {
+  const b = COST_BENCH[key];
+  if (!b || p === null) return { cls: 'na', txt: '\u2013', bench: b ? benchLabel(key) : '' };
+  if (key === 'profit') {
+    if (p >= b.lo) return { cls: 'good', txt: '\u0e14\u0e35', bench: benchLabel(key) };
+    if (p >= b.lo / 2) return { cls: 'warn', txt: '\u0e15\u0e48\u0e33\u0e01\u0e27\u0e48\u0e32\u0e40\u0e01\u0e13\u0e11\u0e4c', bench: benchLabel(key) };
+    return { cls: 'bad', txt: '\u0e19\u0e48\u0e32\u0e01\u0e31\u0e07\u0e27\u0e25', bench: benchLabel(key) };
+  }
+  if (p > b.hi) return { cls: 'bad', txt: '\u0e2a\u0e39\u0e07\u0e40\u0e01\u0e34\u0e19\u0e40\u0e01\u0e13\u0e11\u0e4c', bench: benchLabel(key) };
+  if (b.lo > 0 && p < b.lo) return { cls: 'info', txt: '\u0e15\u0e48\u0e33\u0e01\u0e27\u0e48\u0e32\u0e40\u0e01\u0e13\u0e11\u0e4c', bench: benchLabel(key) };
+  return { cls: 'good', txt: '\u0e2d\u0e22\u0e39\u0e48\u0e43\u0e19\u0e40\u0e01\u0e13\u0e11\u0e4c', bench: benchLabel(key) };
+}
+
+function tagHtml(t) {
+  const color = { good:'#1e7742', warn:'#a8650f', bad:'#b32424', info:'#24549e', na:'#8a857c' }[t.cls];
+  const bg    = { good:'#e8f6ed', warn:'#fdf2e3', bad:'#fdeaea', info:'#e9f0fb', na:'#f2f0ec' }[t.cls];
+  return `<span style="display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:${bg};color:${color};">${esc(t.txt)}</span>`;
+}
+
+function pctBar(p, cls) {
+  const w = Math.max(0, Math.min(100, p === null ? 0 : p));
+  const color = { good:'#0F6B5C', warn:'#C98A25', bad:'#C1533A', info:'#2f6fd0', na:'#ccc7bd' }[cls] || '#0F6B5C';
+  return `<div style="background:#f0ede8;border-radius:99px;height:8px;min-width:70px;overflow:hidden;">
+    <div style="width:${w.toFixed(1)}%;height:100%;background:${color};border-radius:99px;"></div></div>`;
+}
+
+function renderCostStructure(res) {
+  const body = document.getElementById('cost-struct-body');
+  if (!body) return;
+  const b = res.breakdown || {};
+  const sales = res.sales || 0;
+  const prime = (b.labor || 0) + (b.foodCost || 0);
+
+  const rows = [
+    { name: '\ud83e\uddd1\u200d\ud83c\udf73 \u0e04\u0e48\u0e32\u0e41\u0e23\u0e07\u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07', v: b.labor, key: 'labor' },
+    { name: '\ud83e\uddfa \u0e0b\u0e37\u0e49\u0e2d\u0e02\u0e2d\u0e07\u0e15\u0e25\u0e32\u0e14 (\u0e2a\u0e38\u0e17\u0e18\u0e34 \u0e2b\u0e25\u0e31\u0e07\u0e2b\u0e31\u0e01\u0e40\u0e07\u0e34\u0e19\u0e17\u0e2d\u0e19)', v: b.market, key: null, sub: true },
+    { name: '\ud83d\uded2 \u0e0b\u0e37\u0e49\u0e2d\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e40\u0e15\u0e34\u0e21/\u0e23\u0e49\u0e32\u0e19\u0e04\u0e49\u0e32', v: b.purchases, key: null, sub: true },
+    { name: '\ud83e\udd55 \u0e23\u0e27\u0e21\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a (Food Cost)', v: b.foodCost, key: 'foodCost', strong: true },
+    { name: '\ud83c\udfe0 \u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01\u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07', v: b.rent, key: 'rent' }
+  ];
+
+  const cats = Object.entries(b.periodicByCat || {}).sort((x, y) => y[1] - x[1]);
+  rows.push({ name: '\ud83d\udca7 \u0e04\u0e48\u0e32\u0e43\u0e0a\u0e49\u0e08\u0e48\u0e32\u0e22\u0e1b\u0e23\u0e30\u0e08\u0e33/\u0e40\u0e25\u0e47\u0e01\u0e46 \u0e19\u0e49\u0e2d\u0e22\u0e46', v: b.periodicExp, key: 'periodic' });
+  cats.forEach(([k, v]) => rows.push({ name: '\u2514 ' + k, v: v, key: null, sub: true }));
+
+  let html = rows.map(r => {
+    const p = pctOf(r.v, sales);
+    const t = r.key ? benchTag(r.key, p) : { cls: 'na', txt: '', bench: '' };
+    return `<tr${r.sub ? ' style="color:#6b665d;font-size:13px;"' : ''}>
+      <td${r.strong ? ' style="font-weight:700;"' : ''}>${esc(r.name)}</td>
+      <td class="num">${fmt(r.v)}</td>
+      <td class="num"${r.strong ? ' style="font-weight:700;"' : ''}>${p === null ? '\u2013' : p.toFixed(1) + '%'}</td>
+      <td>${pctBar(p, t.cls)}</td>
+      <td>${r.key ? tagHtml(t) + ' <span style="font-size:11px;color:#8a857c;">' + esc(t.bench) + '</span>' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  const primeTag = benchTag('prime', pctOf(prime, sales));
+  const expTag = benchTag('expenses', pctOf(res.expenses, sales));
+  const profTag = benchTag('profit', pctOf(res.profit, sales));
+
+  html += `<tr style="background:#faf9f7;">
+      <td style="font-weight:700;">\u26a1 Prime Cost (\u0e04\u0e48\u0e32\u0e41\u0e23\u0e07 + \u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a)</td>
+      <td class="num">${fmt(prime)}</td>
+      <td class="num" style="font-weight:700;">${pctTxt(prime, sales)}</td>
+      <td>${pctBar(pctOf(prime, sales), primeTag.cls)}</td>
+      <td>${tagHtml(primeTag)} <span style="font-size:11px;color:#8a857c;">${esc(primeTag.bench)}</span></td></tr>`;
+  html += `<tr style="background:#faf9f7;">
+      <td style="font-weight:700;">\ud83d\udcc9 \u0e23\u0e32\u0e22\u0e08\u0e48\u0e32\u0e22\u0e23\u0e27\u0e21\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14</td>
+      <td class="num">${fmt(res.expenses)}</td>
+      <td class="num" style="font-weight:700;">${pctTxt(res.expenses, sales)}</td>
+      <td>${pctBar(pctOf(res.expenses, sales), expTag.cls)}</td>
+      <td>${tagHtml(expTag)} <span style="font-size:11px;color:#8a857c;">${esc(expTag.bench)}</span></td></tr>`;
+  html += `<tr style="background:#f2f7f5;">
+      <td style="font-weight:700;">\ud83d\udcb0 \u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34 (Net Margin)</td>
+      <td class="num" style="font-weight:700;color:${res.profit >= 0 ? 'var(--teal-dark)' : 'var(--rust)'}">${fmt(res.profit)}</td>
+      <td class="num" style="font-weight:700;">${pctTxt(res.profit, sales)}</td>
+      <td>${pctBar(pctOf(res.profit, sales), profTag.cls)}</td>
+      <td>${tagHtml(profTag)} <span style="font-size:11px;color:#8a857c;">${esc(profTag.bench)}</span></td></tr>`;
+
+  body.innerHTML = html || '<tr><td colspan="5" class="empty-note">\u0e44\u0e21\u0e48\u0e21\u0e35\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25</td></tr>';
+
+  renderCostVerdict(res, prime);
+
+  const donutLabels = ['\u0e04\u0e48\u0e32\u0e41\u0e23\u0e07', '\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a', '\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01', '\u0e08\u0e48\u0e32\u0e22\u0e1b\u0e23\u0e30\u0e08\u0e33/\u0e2d\u0e37\u0e48\u0e19\u0e46', '\u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34'];
+  const donutData = [b.labor || 0, b.foodCost || 0, b.rent || 0, b.periodicExp || 0, Math.max(res.profit || 0, 0)];
+  drawDonut('chart-cost-donut', donutLabels, donutData, ['#C98A25', '#C1533A', '#7B6CA8', '#8a857c', '#0F6B5C']);
+}
+
+function renderCostVerdict(res, prime) {
+  const box = document.getElementById('cost-verdict');
+  if (!box) return;
+  const b = res.breakdown || {};
+  const sales = res.sales || 0;
+  const items = [];
+
+  if (sales <= 0) {
+    box.innerHTML = '<div class="empty-note">\u0e0a\u0e48\u0e27\u0e07\u0e19\u0e35\u0e49\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e22\u0e2d\u0e14\u0e02\u0e32\u0e22 \u2014 \u0e01\u0e23\u0e2d\u0e01\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e43\u0e19\u0e41\u0e17\u0e47\u0e1a \u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e23\u0e32\u0e22\u0e27\u0e31\u0e19 \u0e01\u0e48\u0e2d\u0e19</div>';
+    return;
+  }
+
+  const P = k => pctOf(k, sales);
+  const food = P(b.foodCost), lab = P(b.labor), rnt = P(b.rent), per = P(b.periodicExp), prm = P(prime), prof = P(res.profit);
+
+  const push = (cls, head, detail) => items.push({ cls, head, detail });
+
+  if (prof !== null && prof < 0) {
+    push('bad', '\u0e0a\u0e48\u0e27\u0e07\u0e19\u0e35\u0e49\u0e02\u0e32\u0e14\u0e17\u0e38\u0e19 ' + fmt(Math.abs(res.profit)),
+      '\u0e23\u0e32\u0e22\u0e08\u0e48\u0e32\u0e22\u0e23\u0e27\u0e21\u0e04\u0e34\u0e14\u0e40\u0e1b\u0e47\u0e19 ' + pctTxt(res.expenses, sales) + ' \u0e02\u0e2d\u0e07\u0e22\u0e2d\u0e14\u0e02\u0e32\u0e22 \u2014 \u0e2b\u0e32\u0e15\u0e31\u0e27\u0e17\u0e35\u0e48\u0e2a\u0e39\u0e07\u0e40\u0e01\u0e34\u0e19\u0e40\u0e01\u0e13\u0e11\u0e4c\u0e02\u0e49\u0e32\u0e07\u0e25\u0e48\u0e32\u0e07\u0e41\u0e25\u0e49\u0e27\u0e41\u0e01\u0e49\u0e17\u0e35\u0e25\u0e30\u0e15\u0e31\u0e27');
+  } else if (prof !== null && prof < COST_BENCH.profit.lo) {
+    push('warn', '\u0e2d\u0e31\u0e15\u0e23\u0e32\u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34 ' + prof.toFixed(1) + '% \u0e15\u0e48\u0e33\u0e01\u0e27\u0e48\u0e32\u0e40\u0e01\u0e13\u0e11\u0e4c\u0e17\u0e35\u0e48\u0e15\u0e31\u0e49\u0e07\u0e44\u0e27\u0e49 (' + benchLabel('profit') + ')',
+      '\u0e23\u0e49\u0e32\u0e19\u0e2d\u0e32\u0e2b\u0e32\u0e23\u0e40\u0e25\u0e47\u0e01\u0e17\u0e35\u0e48\u0e2a\u0e38\u0e02\u0e20\u0e32\u0e1e\u0e14\u0e35\u0e04\u0e27\u0e23\u0e2d\u0e22\u0e39\u0e48 10\u201320% \u2014 \u0e01\u0e33\u0e44\u0e23\u0e1a\u0e32\u0e07\u0e41\u0e1b\u0e25\u0e27\u0e48\u0e32\u0e40\u0e2b\u0e19\u0e37\u0e48\u0e2d\u0e22\u0e2b\u0e19\u0e31\u0e01\u0e41\u0e15\u0e48\u0e40\u0e07\u0e34\u0e19\u0e44\u0e21\u0e48\u0e40\u0e2b\u0e25\u0e37\u0e2d');
+  } else if (prof !== null) {
+    push('good', '\u0e2d\u0e31\u0e15\u0e23\u0e32\u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34 ' + prof.toFixed(1) + '% \u0e2d\u0e22\u0e39\u0e48\u0e43\u0e19\u0e40\u0e01\u0e13\u0e11\u0e4c\u0e14\u0e35',
+      '\u0e23\u0e31\u0e01\u0e2b\u0e32\u0e42\u0e04\u0e23\u0e07\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e19\u0e35\u0e49\u0e44\u0e27\u0e49 \u0e41\u0e25\u0e49\u0e27\u0e43\u0e0a\u0e49\u0e40\u0e1b\u0e47\u0e19\u0e40\u0e01\u0e13\u0e11\u0e4c\u0e40\u0e1b\u0e23\u0e35\u0e22\u0e1a\u0e40\u0e17\u0e35\u0e22\u0e1a\u0e40\u0e14\u0e37\u0e2d\u0e19\u0e15\u0e48\u0e2d\u0e46 \u0e44\u0e1b');
+  }
+
+  if (food !== null && food > COST_BENCH.foodCost.hi) {
+    push('bad', '\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a\u0e2a\u0e39\u0e07 ' + food.toFixed(1) + '% (\u0e40\u0e01\u0e13\u0e11\u0e4c ' + benchLabel('foodCost') + ')',
+      '\u0e15\u0e23\u0e27\u0e08 3 \u0e2a\u0e32\u0e40\u0e2b\u0e15\u0e38\u0e2b\u0e25\u0e31\u0e01: \u0e23\u0e32\u0e04\u0e32\u0e02\u0e2d\u0e07\u0e02\u0e36\u0e49\u0e19 \u00b7 \u0e02\u0e2d\u0e07\u0e40\u0e2a\u0e35\u0e22/\u0e17\u0e34\u0e49\u0e07 \u00b7 \u0e15\u0e31\u0e01\u0e40\u0e22\u0e2d\u0e30\u0e44\u0e21\u0e48\u0e40\u0e17\u0e48\u0e32\u0e01\u0e31\u0e19 \u2014 \u0e0a\u0e31\u0e48\u0e07\u0e40\u0e19\u0e37\u0e49\u0e2d/\u0e15\u0e27\u0e07\u0e01\u0e31\u0e19\u0e02\u0e49\u0e32\u0e27\u0e0a\u0e48\u0e27\u0e22\u0e44\u0e14\u0e49\u0e21\u0e32\u0e01');
+  } else if (food !== null && food > 0 && COST_BENCH.foodCost.lo > 0 && food < COST_BENCH.foodCost.lo) {
+    push('info', '\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a\u0e15\u0e48\u0e33\u0e40\u0e1e\u0e35\u0e22\u0e07 ' + food.toFixed(1) + '%',
+      '\u0e14\u0e35\u0e15\u0e48\u0e2d\u0e01\u0e33\u0e44\u0e23 \u0e41\u0e15\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e40\u0e0a\u0e47\u0e04 2 \u0e2d\u0e22\u0e48\u0e32\u0e07: \u0e01\u0e23\u0e2d\u0e01\u0e40\u0e07\u0e34\u0e19\u0e0b\u0e37\u0e49\u0e2d\u0e02\u0e2d\u0e07\u0e04\u0e23\u0e1a\u0e2b\u0e23\u0e37\u0e2d\u0e22\u0e31\u0e07 \u0e41\u0e25\u0e30\u0e1b\u0e23\u0e34\u0e21\u0e32\u0e13\u0e2d\u0e32\u0e2b\u0e32\u0e23\u0e25\u0e14\u0e25\u0e07\u0e2b\u0e23\u0e37\u0e2d\u0e40\u0e1b\u0e25\u0e48\u0e32');
+  }
+
+  if (lab !== null && lab > COST_BENCH.labor.hi) {
+    push('warn', '\u0e04\u0e48\u0e32\u0e41\u0e23\u0e07\u0e2a\u0e39\u0e07 ' + lab.toFixed(1) + '% (\u0e40\u0e01\u0e13\u0e11\u0e4c ' + benchLabel('labor') + ')',
+      '\u0e14\u0e39\u0e04\u0e39\u0e48\u0e01\u0e31\u0e1a\u0e0a\u0e31\u0e48\u0e27\u0e42\u0e21\u0e07\u0e02\u0e32\u0e22\u0e14\u0e35\u0e43\u0e19\u0e23\u0e30\u0e1a\u0e1a\u0e23\u0e32\u0e22\u0e07\u0e32\u0e19 \u2014 \u0e2a\u0e48\u0e27\u0e19\u0e43\u0e2b\u0e0d\u0e48\u0e40\u0e01\u0e34\u0e14\u0e08\u0e32\u0e01\u0e08\u0e31\u0e14\u0e04\u0e19\u0e40\u0e22\u0e2d\u0e30\u0e40\u0e01\u0e34\u0e19\u0e43\u0e19\u0e0a\u0e48\u0e27\u0e07\u0e40\u0e07\u0e35\u0e22\u0e1a \u0e44\u0e21\u0e48\u0e43\u0e0a\u0e48\u0e40\u0e1e\u0e23\u0e32\u0e30\u0e04\u0e19\u0e21\u0e32\u0e01\u0e40\u0e01\u0e34\u0e19');
+  }
+
+  if (rnt !== null && rnt > COST_BENCH.rent.hi) {
+    push('warn', '\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01\u0e2a\u0e39\u0e07 ' + rnt.toFixed(1) + '% (\u0e40\u0e01\u0e13\u0e11\u0e4c ' + benchLabel('rent') + ')',
+      '\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32\u0e40\u0e1b\u0e47\u0e19\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e04\u0e07\u0e17\u0e35\u0e48 \u0e25\u0e14\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e07\u0e48\u0e32\u0e22 \u2014 \u0e17\u0e32\u0e07\u0e2d\u0e2d\u0e01\u0e04\u0e37\u0e2d <b>\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e22\u0e2d\u0e14\u0e02\u0e32\u0e22</b> \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e40\u0e08\u0e37\u0e2d\u0e08\u0e32\u0e07\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32\u0e43\u0e2b\u0e49\u0e04\u0e38\u0e49\u0e21');
+  }
+
+  if (per !== null && per > COST_BENCH.periodic.hi) {
+    const top = Object.entries(b.periodicByCat || {}).sort((x, y) => y[1] - x[1])[0];
+    push('warn', '\u0e04\u0e48\u0e32\u0e43\u0e0a\u0e49\u0e08\u0e48\u0e32\u0e22\u0e1b\u0e23\u0e30\u0e08\u0e33/\u0e40\u0e25\u0e47\u0e01\u0e46 \u0e19\u0e49\u0e2d\u0e22\u0e46 \u0e23\u0e27\u0e21 ' + per.toFixed(1) + '%',
+      (top ? '\u0e15\u0e31\u0e27\u0e43\u0e2b\u0e0d\u0e48\u0e2a\u0e38\u0e14\u0e04\u0e37\u0e2d <b>' + esc(top[0]) + '</b> ' + fmt(top[1]) + ' (' + pctTxt(top[1], sales) + ') \u2014 ' : '') + '\u0e02\u0e2d\u0e07\u0e40\u0e25\u0e47\u0e01\u0e46 \u0e19\u0e49\u0e2d\u0e22\u0e46 \u0e23\u0e27\u0e21\u0e01\u0e31\u0e19\u0e01\u0e34\u0e19\u0e01\u0e33\u0e44\u0e23\u0e44\u0e14\u0e49\u0e21\u0e32\u0e01\u0e01\u0e27\u0e48\u0e32\u0e17\u0e35\u0e48\u0e40\u0e08\u0e49\u0e32\u0e02\u0e2d\u0e07\u0e23\u0e49\u0e32\u0e19\u0e21\u0e31\u0e01\u0e23\u0e39\u0e49\u0e2a\u0e36\u0e01');
+  }
+
+  if (prm !== null && prm > COST_BENCH.prime.hi) {
+    push('bad', 'Prime Cost ' + prm.toFixed(1) + '% \u0e40\u0e01\u0e34\u0e19\u0e40\u0e01\u0e13\u0e11\u0e4c ' + benchLabel('prime'),
+      '\u0e04\u0e48\u0e32\u0e41\u0e23\u0e07 + \u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a \u0e23\u0e27\u0e21\u0e01\u0e31\u0e19\u0e04\u0e37\u0e2d\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e01\u0e49\u0e2d\u0e19\u0e43\u0e2b\u0e0d\u0e48\u0e2a\u0e38\u0e14 \u0e16\u0e49\u0e32\u0e40\u0e01\u0e34\u0e19 65% \u0e21\u0e31\u0e01\u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34\u0e19\u0e49\u0e2d\u0e22\u0e2b\u0e23\u0e37\u0e2d\u0e02\u0e32\u0e14\u0e17\u0e38\u0e19');
+  }
+
+  const days = res.days.length, act = res.activeDays || 0;
+  if (act < days) {
+    push('info', '\u0e0a\u0e48\u0e27\u0e07\u0e19\u0e35\u0e49\u0e21\u0e35\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25 ' + act + ' \u0e08\u0e32\u0e01 ' + days + ' \u0e27\u0e31\u0e19',
+      '\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e01\u0e23\u0e2d\u0e01\u0e08\u0e30\u0e17\u0e33\u0e43\u0e2b\u0e49 % \u0e40\u0e1e\u0e35\u0e49\u0e22\u0e19\u0e44\u0e14\u0e49 \u2014 \u0e01\u0e23\u0e2d\u0e01\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e04\u0e23\u0e1a\u0e17\u0e38\u0e01\u0e27\u0e31\u0e19\u0e01\u0e48\u0e2d\u0e19\u0e43\u0e0a\u0e49\u0e15\u0e31\u0e14\u0e2a\u0e34\u0e19\u0e43\u0e08');
+  }
+  if (days < 14) {
+    push('info', '\u0e0a\u0e48\u0e27\u0e07\u0e17\u0e35\u0e48\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e2a\u0e31\u0e49\u0e19\u0e40\u0e01\u0e34\u0e19\u0e44\u0e1b (' + days + ' \u0e27\u0e31\u0e19)',
+      '% \u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e04\u0e27\u0e23\u0e14\u0e39\u0e40\u0e1b\u0e47\u0e19\u0e23\u0e32\u0e22\u0e40\u0e14\u0e37\u0e2d\u0e19 \u0e40\u0e1e\u0e23\u0e32\u0e30\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e04\u0e48\u0e32\u0e19\u0e49\u0e33\u0e04\u0e48\u0e32\u0e44\u0e1f\u0e08\u0e48\u0e32\u0e22\u0e40\u0e1b\u0e47\u0e19\u0e01\u0e49\u0e2d\u0e19\u0e40\u0e14\u0e37\u0e2d\u0e19\u0e25\u0e30\u0e04\u0e23\u0e31\u0e49\u0e07');
+  }
+
+  const order = { bad: 0, warn: 1, info: 2, good: 3 };
+  items.sort((a, c) => order[a.cls] - order[c.cls]);
+
+  const colorOf = { bad: '#d93636', warn: '#e8912d', good: '#2e9e5b', info: '#2f6fd0' };
+  box.innerHTML = items.map(it => `<div style="border:1px solid #e6e3dd;border-left:5px solid ${colorOf[it.cls]};border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff;">
+      <div style="font-weight:700;font-size:14.5px;margin-bottom:4px;">${esc(it.head)}</div>
+      <div style="font-size:13.5px;line-height:1.7;color:#5c574e;">${it.detail}</div>
+    </div>`).join('') || '<div class="empty-note">\u0e42\u0e04\u0e23\u0e07\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e2d\u0e22\u0e39\u0e48\u0e43\u0e19\u0e40\u0e01\u0e13\u0e11\u0e4c\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14 \ud83c\udf89</div>';
+}
+
+/* การ์ดย่อ % บนหน้าภาพรวม (สร้างครั้งเดียว) */
+function renderCostMini(res) {
+  const host = document.getElementById('tab-dashboard');
+  if (!host) return;
+  let card = document.getElementById('dash-cost-mini');
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'dash-cost-mini';
+    card.innerHTML = '<h3>\u0e2a\u0e31\u0e14\u0e2a\u0e48\u0e27\u0e19\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e40\u0e14\u0e37\u0e2d\u0e19\u0e19\u0e35\u0e49 (% \u0e02\u0e2d\u0e07\u0e22\u0e2d\u0e14\u0e02\u0e32\u0e22)</h3><div id="dash-cost-mini-body"></div>';
+    host.appendChild(card);
+  }
+  const b = res.breakdown || {};
+  const sales = res.sales || 0;
+  const rows = [
+    ['\u0e04\u0e48\u0e32\u0e41\u0e23\u0e07', b.labor, 'labor'],
+    ['\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a (\u0e15\u0e25\u0e32\u0e14+\u0e23\u0e49\u0e32\u0e19\u0e04\u0e49\u0e32)', b.foodCost, 'foodCost'],
+    ['\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01\u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07', b.rent, 'rent'],
+    ['\u0e08\u0e48\u0e32\u0e22\u0e1b\u0e23\u0e30\u0e08\u0e33/\u0e40\u0e25\u0e47\u0e01\u0e46 \u0e19\u0e49\u0e2d\u0e22\u0e46', b.periodicExp, 'periodic'],
+    ['\u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34', res.profit, 'profit']
+  ];
+  document.getElementById('dash-cost-mini-body').innerHTML = sales <= 0
+    ? '<div class="empty-note">\u0e40\u0e14\u0e37\u0e2d\u0e19\u0e19\u0e35\u0e49\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e22\u0e2d\u0e14\u0e02\u0e32\u0e22</div>'
+    : rows.map(([name, v, key]) => {
+        const p = pctOf(v, sales), t = benchTag(key, p);
+        return `<div style="display:grid;grid-template-columns:1fr 90px 90px 110px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid #f2f0ec;font-size:13.5px;">
+          <span>${esc(name)}</span>
+          <span class="num" style="text-align:right;">${fmt(v)}</span>
+          <span class="num" style="text-align:right;font-weight:700;">${p === null ? '\u2013' : p.toFixed(1) + '%'}</span>
+          <span>${tagHtml(t)}</span></div>`;
+      }).join('');
+}
+
+/* บันทึกการ์ดโครงสร้างต้นทุนเป็นรูปภาพ */
+document.getElementById('btn-export-cost-img').addEventListener('click', () => {
+  const btn = document.getElementById('btn-export-cost-img');
+  const card = document.getElementById('cost-structure-card');
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = '\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e23\u0e39\u0e1b\u0e20\u0e32\u0e1e...';
+  html2canvas(card, { backgroundColor: '#FFFFFF', scale: 2 }).then(canvas => {
+    const a = document.createElement('a');
+    a.download = '\u0e42\u0e04\u0e23\u0e07\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19-' + todayStr() + '.png';
+    a.href = canvas.toDataURL('image/png'); a.click();
+    btn.disabled = false; btn.textContent = label;
+    toast('\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e23\u0e39\u0e1b\u0e20\u0e32\u0e1e\u0e40\u0e23\u0e35\u0e22\u0e1a\u0e23\u0e49\u0e2d\u0e22 \u2714');
+  }).catch(() => {
+    btn.disabled = false; btn.textContent = label;
+    toast('\u0e40\u0e01\u0e34\u0e14\u0e02\u0e49\u0e2d\u0e1c\u0e34\u0e14\u0e1e\u0e25\u0e32\u0e14\u0e43\u0e19\u0e01\u0e32\u0e23\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e23\u0e39\u0e1b\u0e20\u0e32\u0e1e');
+  });
+});
+
 /* ============================================================
    INIT
 ============================================================ */
 loadPresets();
+loadBench();
 loadDaily();
 recalcAll();
 renderDashboard();
 </script>
+
+<!-- ================= ระบบล็อกเข้าใช้งาน (รหัสร้าน + ชื่อพนักงาน) ================= -->
+<!-- ใช้รหัสเดียวกันกับระบบรับออเดอร์ (racing_order_app/accessCode) -->
+<!-- ใส่ครั้งเดียว จำไว้จนกว่าเจ้าของจะเปลี่ยนรหัส → ทุกเครื่องเด้งขึ้นทันที -->
+<script>
+(function () {
+  'use strict';
+  if (window.__APP_GATE__) return;
+  window.__APP_GATE__ = true;
+
+  var NEED_CODE = true;                 // false = แอปนี้มีระบบรหัสของตัวเองอยู่แล้ว
+  var APP_LABEL = 'บัญชีร้าน';
+  var DB_URL    = 'https://supertest01-55ac2-default-rtdb.asia-southeast1.firebasedatabase.app/';
+  var CODE_PATH = 'racing_order_app/accessCode';
+  var LS_CODE   = 'access_code_v1';
+  var LS_NAME   = 'staff_name';
+
+  function hashCode(s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+    return (h >>> 0).toString(16);
+  }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  var css = document.createElement('style');
+  css.textContent =
+    '#gateOv{display:none;position:fixed;inset:0;background:rgba(17,20,24,.92);z-index:2147483000;' +
+    'align-items:center;justify-content:center;font-family:inherit;padding:16px}' +
+    '#gateOv.on{display:flex}' +
+    '#gateBox{background:#fff;border-radius:16px;padding:28px 24px;max-width:340px;width:100%;' +
+    'box-shadow:0 12px 40px rgba(0,0,0,.4);text-align:center;box-sizing:border-box}' +
+    '#gateBox .g-ico{font-size:34px;line-height:1}' +
+    '#gateBox .g-ttl{font-size:19px;font-weight:700;color:#2c3e50;margin-top:6px}' +
+    '#gateBox .g-sub{font-size:14px;color:#7f8c8d;margin-top:6px}' +
+    '#gateBox input{width:100%;font-size:21px;padding:11px 14px;border:2px solid #4CAF50;border-radius:9px;' +
+    'text-align:center;box-sizing:border-box;margin:15px 0 4px;-webkit-appearance:none}' +
+    '#gateBox input:focus{outline:none;border-color:#2ecc71}' +
+    '#gateBox button{background:linear-gradient(135deg,#4CAF50,#2ecc71);color:#fff;border:none;' +
+    'padding:12px 20px;border-radius:9px;font-size:17px;font-weight:700;cursor:pointer;width:100%;margin-top:11px}' +
+    '#gateBox button:disabled{opacity:.5;cursor:default}' +
+    '#gateErr{color:#e74c3c;font-size:14px;min-height:20px;margin:8px 0 0;font-weight:600}' +
+    '#gateApp{font-size:12px;color:#b2bec3;margin-top:14px;letter-spacing:.3px}';
+  document.head.appendChild(css);
+
+  var ov = document.createElement('div');
+  ov.id = 'gateOv';
+  ov.innerHTML =
+    '<div id="gateBox">' +
+      '<div class="g-ico" id="gateIco">🔒</div>' +
+      '<div class="g-ttl" id="gateTtl"></div>' +
+      '<div class="g-sub" id="gateSub"></div>' +
+      '<input id="gateInp" autocomplete="off">' +
+      '<p id="gateErr"></p>' +
+      '<button id="gateBtn"></button>' +
+      '<div id="gateApp"></div>' +
+    '</div>';
+
+  function boot() {
+    document.body.appendChild(ov);
+    var inp = document.getElementById('gateInp');
+    var btn = document.getElementById('gateBtn');
+    var err = document.getElementById('gateErr');
+    document.getElementById('gateApp').textContent = APP_LABEL;
+
+    var step = null;
+
+    function show(s) {
+      step = s;
+      err.textContent = '';
+      btn.disabled = false;
+      if (s === 'code') {
+        document.getElementById('gateIco').textContent = '🔒';
+        document.getElementById('gateTtl').textContent = 'ใส่รหัสเข้าใช้งาน';
+        document.getElementById('gateSub').textContent = 'รหัสเดียวกับระบบรับออเดอร์ · ใส่แค่ครั้งแรก';
+        inp.type = 'password';
+        inp.maxLength = 12;
+        inp.placeholder = '••••••';
+        btn.textContent = '✅ เข้าใช้งาน';
+      } else {
+        document.getElementById('gateIco').textContent = '👤';
+        document.getElementById('gateTtl').textContent = 'ยินดีต้อนรับ!';
+        document.getElementById('gateSub').textContent = 'พิมพ์ชื่อของคุณเพื่อเริ่มใช้งาน';
+        inp.type = 'text';
+        inp.maxLength = 20;
+        inp.placeholder = 'ชื่อพนักงาน';
+        btn.textContent = '✅ เริ่มงาน';
+      }
+      inp.value = '';
+      ov.classList.add('on');
+      setTimeout(function () { try { inp.focus(); } catch (e) {} }, 80);
+    }
+
+    function hide() { ov.classList.remove('on'); }
+
+    function applyName(name) {
+      lsSet(LS_NAME, name);
+      window.APP_STAFF_NAME = name;
+      // ส่งต่อให้แอปที่ใช้ชื่อคนละคีย์
+      lsSet('cashier_staff', name);
+      if (typeof window.STAFF !== 'undefined') window.STAFF = name;
+      if (typeof window.currentStaffName !== 'undefined') window.currentStaffName = name;
+      try { if (typeof window.updateStaffBadge === 'function') window.updateStaffBadge(); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('staffnamechange', { detail: name })); } catch (e) {}
+    }
+
+    function needName() {
+      var n = (lsGet(LS_NAME) || '').trim();
+      if (n) { applyName(n); hide(); return; }
+      show('name');
+    }
+
+    function submit() {
+      var v = (inp.value || '').trim();
+      if (!v) { err.textContent = step === 'code' ? '❌ กรุณาใส่รหัสก่อน' : '❌ กรุณาใส่ชื่อ'; return; }
+      if (step === 'name') { applyName(v); hide(); return; }
+      err.textContent = '';
+      btn.disabled = true;
+      fetch(DB_URL + CODE_PATH + '.json?t=' + Date.now())
+        .then(function (r) { return r.json(); })
+        .then(function (stored) {
+          btn.disabled = false;
+          var h = hashCode(v);
+          if (!stored) {                       // ยังไม่เคยตั้งรหัส → ตั้งครั้งแรก
+            if (window.firebase && firebase.apps && firebase.apps.length) {
+              firebase.database().ref(CODE_PATH).set(h);
+            }
+            lsSet(LS_CODE, h); needName(); return;
+          }
+          if (h === stored) { lsSet(LS_CODE, stored); needName(); }
+          else { err.textContent = '❌ รหัสไม่ถูกต้อง'; inp.value = ''; inp.focus(); }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          err.textContent = '❌ เชื่อมต่อ Firebase ไม่ได้ ลองใหม่';
+        });
+    }
+
+    btn.onclick = submit;
+    inp.onkeydown = function (e) { if (e.key === 'Enter') submit(); };
+
+    // เปลี่ยนชื่อพนักงานได้ตลอด (เรียกจาก console หรือปุ่มในแอป)
+    window.appChangeStaffName = function () { show('name'); };
+    window.appLockNow = function () { show(NEED_CODE ? 'code' : 'name'); };
+
+    if (!NEED_CODE) { needName(); return; }
+
+    show('code');                              // ล็อกไว้ก่อนเสมอ
+    fetch(DB_URL + CODE_PATH + '.json?t=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (stored) {
+        var saved = lsGet(LS_CODE);
+        if (!stored || (saved && saved === stored)) needName();
+        // เฝ้าดูการเปลี่ยนรหัส → ล็อกทุกเครื่องทันที
+        if (window.firebase && firebase.apps && firebase.apps.length) {
+          firebase.database().ref(CODE_PATH).on('value', function (snap) {
+            var cur = snap.val();
+            if (!cur) return;
+            if (lsGet(LS_CODE) !== cur) show('code');
+          });
+        }
+      })
+      .catch(function () { show('code'); });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+<!-- ================= จบระบบล็อกเข้าใช้งาน ================= -->
 </body>
 </html>
