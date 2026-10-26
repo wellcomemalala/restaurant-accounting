@@ -652,7 +652,7 @@ function renderHalfHalf() {
     const div = document.createElement('div');
     div.className = 'dyn-row three';
     div.innerHTML = `
-      <input type="text" placeholder="ช่องทาง เช่น คนละครึ่ง" value="${row.channel||''}" data-i="${i}" class="hh-ch">
+      <input type="text" placeholder="ช่องทาง เช่น คนละครึ่ง" value="${esc(row.channel||'')}" data-i="${i}" class="hh-ch">
       <input type="number" step="0.01" placeholder="จำนวนเงิน" value="${row.amount??''}" data-i="${i}" class="hh-amt">
       <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);">
         <input type="checkbox" ${row.received?'checked':''} data-i="${i}" class="hh-recv"> รับแล้ว
@@ -786,32 +786,33 @@ function populateCategorySelect() {
    RECALC (live totals on daily entry)
 ============================================================ */
 function recalcAll() {
+  const r2 = n => Math.round((Number(n) || 0) * 100) / 100;
   let denomTotal = 0;
   denomBody.querySelectorAll('.denom-count').forEach(inp => {
     const v = parseFloat(inp.dataset.v), c = parseFloat(inp.value) || 0;
-    const sub = v * c;
-    denomTotal += sub;
+    const sub = r2(v * c);
+    denomTotal = r2(denomTotal + sub);
     denomBody.querySelector(`[data-for="${v}"]`).textContent = fmt(sub);
   });
-  const otherCashTotal = cashOtherRows.reduce((s,r)=>s+(r.amount||0),0);
-  const cashTotal = denomTotal + otherCashTotal;
+  const otherCashTotal = r2(cashOtherRows.reduce((s,r)=>s+(Number(r.amount)||0),0));
+  const cashTotal = r2(denomTotal + otherCashTotal);
 
-  const transfer = parseFloat(document.getElementById('in-transfer').value) || 0;
-  const halfhalfTotal = halfHalfRows.reduce((s,r)=>s+(r.amount||0),0);
+  const transfer = r2(parseFloat(document.getElementById('in-transfer').value) || 0);
+  const halfhalfTotal = r2(halfHalfRows.reduce((s,r)=>s+(Number(r.amount)||0),0));
 
-  const totalSales = cashTotal + transfer + halfhalfTotal;
-  const changeFloat = parseFloat(document.getElementById('in-changefloat').value) || 0;
-  const netSales = totalSales - changeFloat;
+  const totalSales = r2(cashTotal + transfer + halfhalfTotal);
+  const changeFloat = r2(parseFloat(document.getElementById('in-changefloat').value) || 0);
+  const netSales = r2(totalSales - changeFloat);
 
-  const rent = parseFloat(document.getElementById('in-rent').value) || 0;
-  const labor = parseFloat(document.getElementById('in-labor').value) || 0;
-  const marketGiven = parseFloat(document.getElementById('in-market-given').value) || 0;
-  const marketReturn = parseFloat(document.getElementById('in-market-return').value) || 0;
-  const marketNet = marketGiven - marketReturn;
-  const purchasesTotal = purchaseRows.reduce((s,r)=>s+(r.amount||0),0);
-  const totalExpenses = rent + labor + marketNet + purchasesTotal;
+  const rent = r2(parseFloat(document.getElementById('in-rent').value) || 0);
+  const labor = r2(parseFloat(document.getElementById('in-labor').value) || 0);
+  const marketGiven = r2(parseFloat(document.getElementById('in-market-given').value) || 0);
+  const marketReturn = r2(parseFloat(document.getElementById('in-market-return').value) || 0);
+  const marketNet = r2(marketGiven - marketReturn);
+  const purchasesTotal = r2(purchaseRows.reduce((s,r)=>s+(Number(r.amount)||0),0));
+  const totalExpenses = r2(rent + labor + marketNet + purchasesTotal);
 
-  const profit = netSales - totalExpenses;
+  const profit = r2(netSales - totalExpenses);
 
   document.getElementById('sum-cash').textContent = fmt(cashTotal);
   document.getElementById('sum-halfhalf').textContent = fmt(halfhalfTotal);
@@ -881,9 +882,10 @@ function loadDaily() {
     document.getElementById('in-market-return').value = d.marketReturn ?? '';
     document.getElementById('in-notes').value = d.notes ?? '';
     if (d.denoms) denomBody.querySelectorAll('.denom-count').forEach(i => { if (d.denoms[i.dataset.v]) i.value = d.denoms[i.dataset.v]; });
-    cashOtherRows = d.cashOther || []; renderCashOther();
-    halfHalfRows = d.halfHalf || []; renderHalfHalf();
-    purchaseRows = d.purchases || []; renderPurchases();
+    const toArr = v => Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.values(v) : []);
+    cashOtherRows = toArr(d.cashOther); renderCashOther();
+    halfHalfRows = toArr(d.halfHalf); renderHalfHalf();
+    purchaseRows = toArr(d.purchases); renderPurchases();
     recalcAll();
   });
 }
@@ -1055,7 +1057,7 @@ function renderDashboard() {
     Object.entries(daily).forEach(([date, rec]) => {
       if (!rec || typeof rec !== 'object') return;
       if (typeof date !== 'string' || date < pendCutStr) return;
-      const hh = Array.isArray(rec.halfHalf) ? rec.halfHalf : [];
+      const hh = Array.isArray(rec.halfHalf) ? rec.halfHalf : (rec.halfHalf && typeof rec.halfHalf === 'object' ? Object.values(rec.halfHalf) : []);
       hh.forEach(h => {
         if (!h || typeof h !== 'object') return;
         const amt = Number(h.amount) || 0;
@@ -1299,6 +1301,32 @@ document.getElementById('btn-export-csv').addEventListener('click', () => {
 /* ============================================================
    DANGER ZONE — wipes ONLY the app root, never Firebase root
 ============================================================ */
+document.getElementById('btn-backup-json').addEventListener('click', () => {
+  const btn = document.getElementById('btn-backup-json');
+  const origTxt = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳ กำลังดึงข้อมูลสำรอง...';
+  root.once('value').then(snap => {
+    const data = snap.val() || {};
+    const payload = {
+      app: 'restaurant_pos_v1',
+      exportedAt: new Date().toISOString(),
+      data
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'สำรองข้อมูลบัญชีร้าน-' + todayStr() + '.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    window._backupDone = true;
+    toast('ดาวน์โหลดไฟล์สำรองข้อมูล (JSON) เรียบร้อย ✔');
+  }).catch(err => {
+    toast('สำรองข้อมูลไม่สำเร็จ: ' + (err && err.message ? err.message : err));
+  }).finally(() => {
+    btn.disabled = false; btn.textContent = origTxt;
+  });
+});
+
 document.getElementById('btn-wipe').addEventListener('click', () => {
   const txt = document.getElementById('confirm-wipe-text').value.trim();
   if (txt !== 'ลบข้อมูล') { toast('กรุณาพิมพ์ "ลบข้อมูล" ให้ถูกต้องก่อน'); return; }
