@@ -54,8 +54,10 @@ body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);-
 .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;}
 .card h3{margin:0 0 14px;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;display:flex;align-items:center;justify-content:space-between;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid2-65{display:grid;grid-template-columns:13fr 7fr;gap:16px;}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-@media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr;}}
+@media(max-width:760px){.grid2,.grid2-65,.grid3{grid-template-columns:1fr;}}
+.seg.mini button{padding:3px 9px;font-size:11.5px;text-transform:none;letter-spacing:0;}
 
 label.field{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:600;}
 input[type=text],input[type=number],input[type=date],select,textarea{
@@ -170,6 +172,25 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
   border:1px solid var(--teal);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap;text-transform:none;letter-spacing:0;transition:.15s;}
 .export-img-btn:hover{background:var(--teal);color:#fff;}
 .export-img-btn:disabled{opacity:.6;cursor:default;}
+
+/* ---- Expense groups / cost allocation ---- */
+.grp-badge{display:inline-block;font-family:var(--sans);font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;white-space:nowrap;}
+.grp-food{background:#fdeaea;color:#b32424;}
+.grp-marketing{background:#f3eafa;color:#6d35a3;}
+.grp-supplies{background:#e9f0fb;color:#24549e;}
+.grp-utility{background:#fdf2e3;color:#a8650f;}
+.grp-other{background:#f2f0ec;color:#6b665d;}
+.spread-badge{display:inline-block;font-family:var(--sans);font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--teal-soft);color:var(--teal-dark);white-space:nowrap;}
+details.guide summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--ink);}
+details.guide table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;}
+details.guide th{font-size:11px;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);}
+details.guide td{border-bottom:1px solid #f1ece2;padding:8px;text-align:left;vertical-align:top;line-height:1.55;}
+.guide-tips{font-size:13px;line-height:1.75;color:#5c574e;margin:12px 0 0;background:var(--cream);border-radius:8px;padding:10px 12px;}
+.cat-row{display:grid;grid-template-columns:1fr 240px auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #f1ece2;font-size:13.5px;}
+.cat-row select{padding:6px 8px;font-size:13px;}
+@media(max-width:760px){.cat-row{grid-template-columns:1fr 1fr auto;}}
+.alloc-box{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fbfaf7;}
+.alloc-box .receipt-line span:first-child{font-size:12.5px;}
 </style>
 </head>
 <body>
@@ -208,9 +229,15 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
       <div class="tile"><div class="lbl">คนละครึ่งค้างรับ</div><div class="val" id="dash-pending">฿0.00</div><div class="sub" id="dash-pending-count">0 รายการ</div></div>
     </div>
 
-    <div class="grid2">
+    <div class="grid2-65">
       <div class="card">
-        <h3>ยอดขาย 14 วันล่าสุด</h3>
+        <h3>
+          <span id="dash-trend-title">ยอดขาย 30 วันล่าสุด</span>
+          <span class="seg mini" id="dash-trend-seg">
+            <button data-days="14">14 วัน</button>
+            <button data-days="30" class="active">30 วัน</button>
+          </span>
+        </h3>
         <div class="canvas-wrap"><canvas id="chart-trend"></canvas></div>
       </div>
       <div class="card">
@@ -225,7 +252,8 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
         <div class="receipt" style="border:none;padding:0;">
           <div class="receipt-line"><span>ยอดขายสุทธิรวม</span><span class="amt" id="dash-month-sales">฿0.00</span></div>
           <div class="receipt-line"><span>รายจ่ายรวม (รายวัน)</span><span class="amt" id="dash-month-daily-exp">฿0.00</span></div>
-          <div class="receipt-line"><span>รายจ่ายประจำ (น้ำ/ไฟ/เน็ต ฯลฯ)</span><span class="amt" id="dash-month-periodic-exp">฿0.00</span></div>
+          <div class="receipt-line"><span>รายจ่ายประจำ (เฉลี่ยตามเดือนที่ใช้จริง)</span><span class="amt" id="dash-month-periodic-exp">฿0.00</span></div>
+          <div class="receipt-line" style="opacity:.75;"><span>└ เงินที่จ่ายออกจริงเดือนนี้ (อ้างอิง ไม่นำมาคิดกำไร)</span><span class="amt" id="dash-month-periodic-cash">฿0.00</span></div>
           <div class="receipt-line total"><span>กำไร/ขาดทุนสุทธิ</span><span class="amt" id="dash-month-profit">฿0.00</span></div>
         </div>
       </div>
@@ -313,6 +341,7 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
           </div>
           <div class="receipt-line" style="margin-top:8px;"><span>รวมซื้อของอื่นๆ</span><span class="amt" id="sum-purchases">฿0.00</span></div>
           <p class="empty-note" style="margin:8px 0 0;line-height:1.5;">กติกาการกรอก: ช่องนี้ใช้เฉพาะเงินที่<b>จ่ายแยก</b>จากก้อนที่ให้ไปตลาด (เช่น ซื้อเพิ่มที่ร้านค้า/แม็คโคร) ถ้าเป็นของที่ซื้อด้วยเงินก้อนตลาด <b>ไม่ต้องกรอกซ้ำ</b> เพราะจะทำให้ต้นทุนวัตถุดิบเบิ้ล</p>
+          <p class="empty-note" style="margin:6px 0 0;padding:8px 10px;line-height:1.5;text-align:left;background:var(--teal-soft);border-radius:8px;color:var(--teal-dark);">📦 ของที่<b>ซื้อทีละเยอะ ใช้ได้หลายเดือน</b> หรือ<b>ไม่ใช่วัตถุดิบ</b> (ทิชชู่ ถุง กล่อง น้ำยาล้างจาน ถ่าน/แก๊ส) → ให้ไปบันทึกที่แท็บ <b>💧 ค่าใช้จ่ายประจำ</b> แทน แล้วเลือก "ใช้ได้นาน" ระบบจะเฉลี่ยต้นทุนให้ ต้นทุนวัตถุดิบวันนั้นจะไม่พุ่งผิดจริง</p>
           <div id="market-dup-warn" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:#fff4e5;border:1px solid #e8912d;color:#8a5a12;font-size:13px;line-height:1.5;"></div>
 
           <div class="receipt-line total" style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px;">
@@ -349,7 +378,28 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
   <!-- ================= PERIODIC EXPENSES ================= -->
   <div class="tab-panel" id="tab-periodic">
     <div class="card">
-      <h3>เพิ่มค่าใช้จ่ายประจำ (ไม่ใช่รายวัน)</h3>
+      <details class="guide" id="pe-guide">
+        <summary>📘 คู่มือ: ของแต่ละอย่างควรลงประเภทไหน? (กดเพื่อเปิด/ปิด)</summary>
+        <table>
+          <thead><tr><th style="width:22%;">ประเภทบัญชี</th><th>ตัวอย่าง</th><th style="width:28%;">ไปอยู่ตรงไหนในรายงาน</th></tr></thead>
+          <tbody>
+            <tr><td><span class="grp-badge grp-food">🥕 วัตถุดิบ</span></td><td>ของที่<b>กลายเป็นอาหาร/เครื่องดื่มที่ขาย</b> เช่น ไข่มดแดง เนื้อ ผัก <b>น้ำมันพืช</b> ข้าวสาร เครื่องปรุง น้ำแข็ง เบียร์/น้ำอัดลมที่ขายให้ลูกค้า</td><td>นับรวมใน <b>ต้นทุนวัตถุดิบ (Food Cost)</b></td></tr>
+            <tr><td><span class="grp-badge grp-marketing">📣 การตลาด</span></td><td>ยิงแอด Facebook/TikTok ทำป้าย โบรชัวร์ จ้างรีวิว โปรโมทร้าน</td><td>แยกเป็นบรรทัด <b>ค่าการตลาด (เกณฑ์ ≤ 5%)</b> ไม่ปนกับจ่ายประจำ</td></tr>
+            <tr><td><span class="grp-badge grp-supplies">🧻 วัสดุสิ้นเปลือง</span></td><td>ใช้ในร้านแต่<b>ลูกค้าไม่ได้กิน</b> เช่น <b>ทิชชู่</b> ถุง กล่อง หลอด ช้อนพลาสติก น้ำยาล้างจาน ฟองน้ำ ถุงขยะ</td><td>ค่าใช้จ่ายประจำ (ไม่ปนกับ Food Cost)</td></tr>
+            <tr><td><span class="grp-badge grp-utility">⚡ สาธารณูปโภค/เชื้อเพลิง</span></td><td>ค่าน้ำ ค่าไฟ <b>ค่าแก๊ส ถ่านหุงต้ม</b> ค่าเน็ต ค่าโทรศัพท์</td><td>ค่าใช้จ่ายประจำ (ไม่ปนกับ Food Cost)</td></tr>
+            <tr><td><span class="grp-badge grp-other">📦 อื่นๆ</span></td><td>ซ่อมอุปกรณ์ ค่าเก็บขยะ ค่าธรรมเนียม ของเบ็ดเตล็ด</td><td>ค่าใช้จ่ายประจำ (ไม่ปนกับ Food Cost)</td></tr>
+          </tbody>
+        </table>
+        <div class="guide-tips">
+          💡 <b>ซื้อทีละเยอะ ใช้ได้หลายเดือน</b> (ทิชชู่ 10 แพ็ค, น้ำมันพืชลังใหญ่, ถ่านกระสอบ) → ตั้ง <b>"ใช้ได้นาน"</b> เป็นจำนวนเดือนที่คาดว่าจะใช้หมด ระบบจะ<b>เฉลี่ยต้นทุน</b>ลงแต่ละเดือนให้อัตโนมัติ กำไรแต่ละเดือนจะไม่กระโดดขึ้นลงผิดจริง<br>
+          💡 ซื้อแม็คโครทีเดียวหลายอย่าง → <b>แยกบิลเป็นหลายรายการตามประเภท</b> (น้ำมันพืช = วัตถุดิบ, ทิชชู่ = วัสดุสิ้นเปลือง) แล้วพิมพ์ "แม็คโคร" ไว้ในหมายเหตุ<br>
+          💡 ของที่ซื้อด้วยเงินก้อนตลาดในแท็บบันทึกรายวันแล้ว <b>ไม่ต้องกรอกซ้ำ</b>ที่นี่
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h3>เพิ่มค่าใช้จ่ายประจำ / ซื้อของสต็อก (ไม่ใช่รายวัน)</h3>
       <div class="grid3">
         <div>
           <label class="field">หมวด</label>
@@ -358,7 +408,23 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
         <div><label class="field">วันที่จ่าย</label><input type="date" id="pe-date"></div>
         <div><label class="field">จำนวนเงิน</label><input type="number" id="pe-amount" step="0.01" placeholder="0.00"></div>
       </div>
-      <div class="section-gap"><label class="field">หมายเหตุ</label><input type="text" id="pe-note" placeholder="เช่น บิลเดือน ก.ค."></div>
+      <div class="grid3 section-gap">
+        <div><label class="field">ประเภทบัญชี</label><select id="pe-group"></select></div>
+        <div><label class="field">ใช้ได้นาน (เฉลี่ยต้นทุน)</label>
+          <select id="pe-spread">
+            <option value="1">จ่ายครั้งเดียว / ใช้หมดในเดือน</option>
+            <option value="2">2 เดือน</option>
+            <option value="3">3 เดือน</option>
+            <option value="4">4 เดือน</option>
+            <option value="5">5 เดือน</option>
+            <option value="6">6 เดือน</option>
+            <option value="9">9 เดือน</option>
+            <option value="12">12 เดือน</option>
+          </select>
+        </div>
+        <div><label class="field">หมายเหตุ</label><input type="text" id="pe-note" placeholder="เช่น แม็คโคร ทิชชู่ 10 แพ็ค / บิลเดือน ก.ค."></div>
+      </div>
+      <div id="pe-spread-preview" style="display:none;margin-top:10px;padding:8px 12px;border-radius:8px;background:var(--teal-soft);color:var(--teal-dark);font-size:13px;line-height:1.6;"></div>
       <div class="section-gap row-inline" style="gap:8px;"><button class="primary" id="btn-add-periodic">+ เพิ่มรายการ</button><button class="ghost" id="btn-cancel-periodic" style="display:none;">ยกเลิกการแก้ไข</button></div>
     </div>
 
@@ -371,8 +437,9 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
         <tbody id="periodic-body"></tbody>
       </table>
       <div class="receipt-line total" style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px;">
-        <span>รวมเดือนที่เลือก</span><span class="amt rust" id="periodic-month-total">฿0.00</span>
+        <span>เงินที่จ่ายออกจริงในเดือนที่เลือก</span><span class="amt rust" id="periodic-month-total">฿0.00</span>
       </div>
+      <div id="periodic-alloc-summary"></div>
     </div>
   </div>
 
@@ -464,11 +531,14 @@ h4.subhead{font-size:13px;color:var(--ink);margin:0 0 10px;font-weight:700;}
 
     <div class="card">
       <h3>หมวดค่าใช้จ่ายประจำ</h3>
-      <div class="row-inline" style="max-width:400px;">
-        <input type="text" id="new-category" placeholder="เช่น ค่าน้ำ, ค่าไฟ, ค่าเน็ต">
+      <p class="empty-note" style="margin:0 0 10px;padding:0;text-align:left;line-height:1.6;">กำหนดว่าแต่ละหมวดเป็น<b>ประเภทบัญชี</b>ไหน — หมวดที่ตั้งเป็น <b>🥕 วัตถุดิบ</b> จะถูกนับรวมใน Food Cost อัตโนมัติ ส่วนประเภทอื่นอยู่ใน "ค่าใช้จ่ายประจำ" (ถ้าบางบิลไม่ตรงกับหมวด เปลี่ยนประเภทเฉพาะรายการนั้นได้ตอนกรอก)</p>
+      <div class="row-inline" style="max-width:620px;flex-wrap:wrap;">
+        <input type="text" id="new-category" placeholder="เช่น ค่าแก๊ส-ถ่าน, วัสดุสิ้นเปลือง" style="min-width:180px;">
+        <select id="new-category-group" style="width:230px;flex:none;"></select>
         <button id="btn-add-category">+ เพิ่ม</button>
       </div>
-      <div id="category-preset-list" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div id="category-preset-list" style="margin-top:12px;"></div>
+      <button class="ghost small" id="btn-add-recommended-cats" style="margin-top:10px;">✨ เพิ่มหมวดแนะนำที่ยังไม่มี (วัตถุดิบซื้อสต็อก / วัสดุสิ้นเปลือง / แก๊ส-ถ่าน ฯลฯ)</button>
     </div>
 
     <div class="card">
@@ -694,12 +764,58 @@ function addPurchase(vendor='') { purchaseRows.push({vendor, amount:0}); renderP
 /* ============================================================
    PRESETS (vendors / channels / expense categories)
 ============================================================ */
-let presets = { vendors: [], channels: [], categories: ['ค่าน้ำ','ค่าไฟ','ค่าอินเทอร์เน็ต','ค่าใช้จ่ายอื่นๆ'] };
+/* ---- ประเภทบัญชีของค่าใช้จ่ายประจำ ----
+   food      = วัตถุดิบ → นับรวมใน Food Cost
+   marketing = การตลาด/ยิงแอด → แยกเป็นบรรทัด % ค่าการตลาด (เกณฑ์ ≤ 5%)
+   supplies  = วัสดุสิ้นเปลือง/บรรจุภัณฑ์
+   utility   = สาธารณูปโภค/เชื้อเพลิง (น้ำ ไฟ แก๊ส ถ่าน เน็ต)
+   other     = อื่นๆ (ค่าเริ่มต้น — พฤติกรรมเดิมของระบบ)
+   presets.categoryGroups เก็บในหน่วยความจำเป็น { ชื่อหมวด: group }
+   แต่บันทึกขึ้น Firebase เป็น array [{n,g}] เพราะชื่อหมวดอาจมีอักขระที่ห้ามใช้เป็น key (เช่น / . #) */
+const PE_GROUPS = {
+  food:      { label: '🥕 วัตถุดิบ (นับรวม Food Cost)',     short: 'วัตถุดิบ' },
+  marketing: { label: '📣 การตลาด/ยิงแอด (แยก % ≤ 5%)',    short: 'การตลาด' },
+  supplies:  { label: '🧻 วัสดุสิ้นเปลือง/บรรจุภัณฑ์',     short: 'วัสดุสิ้นเปลือง' },
+  utility:   { label: '⚡ สาธารณูปโภค/เชื้อเพลิง',        short: 'สาธารณูปโภค' },
+  other:     { label: '📦 อื่นๆ',                          short: 'อื่นๆ' }
+};
+const PE_GROUP_KEYS = ['food', 'marketing', 'supplies', 'utility', 'other'];
+const RECOMMENDED_CATS = [
+  ['ค่าน้ำ', 'utility'], ['ค่าไฟ', 'utility'], ['ค่าแก๊ส-ถ่าน', 'utility'], ['ค่าอินเทอร์เน็ต', 'utility'],
+  ['วัตถุดิบ (ซื้อสต็อก)', 'food'], ['เครื่องดื่ม/เบียร์ (ขาย)', 'food'],
+  ['การตลาด/ยิงแอด', 'marketing'],
+  ['วัสดุสิ้นเปลือง', 'supplies'], ['ค่าใช้จ่ายอื่นๆ', 'other']
+];
+const BUILTIN_CAT_GROUPS = {};
+RECOMMENDED_CATS.forEach(([n, g]) => { BUILTIN_CAT_GROUPS[n] = g; });
+function defaultCategories() { return RECOMMENDED_CATS.map(x => x[0]); }
+let presets = { vendors: [], channels: [], categories: defaultCategories(), categoryGroups: {} };
+function catGroup(cat) {
+  cat = String(cat || '').trim();
+  const g = (presets.categoryGroups || {})[cat] || BUILTIN_CAT_GROUPS[cat];
+  return PE_GROUPS[g] ? g : 'other';
+}
+function peGroup(e) { return (e && PE_GROUPS[e.group]) ? e.group : catGroup(e && e.category); }
+function groupOptions(sel) {
+  return PE_GROUP_KEYS.map(k => `<option value="${k}"${k === sel ? ' selected' : ''}>${PE_GROUPS[k].label}</option>`).join('');
+}
+function groupBadge(g) { return `<span class="grp-badge grp-${g}">${esc(PE_GROUPS[g].short)}</span>`; }
+function cgFromDb(raw) {
+  const out = {};
+  const arr = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
+  arr.forEach(x => { if (x && typeof x.n === 'string' && PE_GROUPS[x.g]) out[x.n] = x.g; });
+  return out;
+}
+function cgToDb() {
+  return Object.entries(presets.categoryGroups || {}).filter(([n, g]) => n && PE_GROUPS[g]).map(([n, g]) => ({ n, g }));
+}
+document.getElementById('pe-group').innerHTML = groupOptions('other');
+document.getElementById('new-category-group').innerHTML = groupOptions('other');
 
 function loadPresets() {
   refPresets.once('value').then(snap => {
     const v = snap.val();
-    if (v) presets = { vendors: v.vendors||[], channels: v.channels||[], categories: v.categories||presets.categories };
+    if (v) presets = { vendors: v.vendors||[], channels: v.channels||[], categories: v.categories||presets.categories, categoryGroups: cgFromDb(v.categoryGroups) };
     renderPresetUI();
   });
 }
@@ -707,10 +823,13 @@ function savePresets(branch) {
   const payload = {};
   if (branch === 'vendors' || branch === 'channels' || branch === 'categories') {
     payload[branch] = presets[branch] || [];
+  } else if (branch === 'categoryGroups') {
+    payload.categoryGroups = cgToDb();
   } else {
     payload.vendors = presets.vendors || [];
     payload.channels = presets.channels || [];
     payload.categories = presets.categories || [];
+    payload.categoryGroups = cgToDb();
   }
   return refPresets.update(payload).catch(err => {
     toast('บันทึกพรีเซตไม่สำเร็จ: ' + ((err && err.message) ? err.message : err));
@@ -733,7 +852,16 @@ function renderPresetUI() {
   const cl = document.getElementById('channel-preset-list');
   cl.innerHTML = presets.channels.map(v => `<span class="chip">${esc(v)}<span class="chip-x" data-type="channels" data-v="${esc(v)}">✕</span></span>`).join('') || '<span class="empty-note">ยังไม่มีพรีเซต</span>';
   const gl = document.getElementById('category-preset-list');
-  gl.innerHTML = presets.categories.map(v => `<span class="chip">${esc(v)}<span class="chip-x" data-type="categories" data-v="${esc(v)}">✕</span></span>`).join('');
+  gl.innerHTML = presets.categories.map(v => `<div class="cat-row"><span>${esc(v)}</span><select class="cat-grp" data-v="${esc(v)}">${groupOptions(catGroup(v))}</select><span class="chip-x" data-type="categories" data-v="${esc(v)}" title="ลบหมวด">✕</span></div>`).join('') || '<span class="empty-note">ยังไม่มีหมวด</span>';
+  gl.querySelectorAll('.cat-grp').forEach(s => s.addEventListener('change', e => {
+    const name = e.target.dataset.v, g = e.target.value;
+    if (!PE_GROUPS[g]) return;
+    presets.categoryGroups[name] = g;
+    savePresets('categoryGroups');
+    toast('ตั้ง "' + name + '" เป็น ' + PE_GROUPS[g].short + ' แล้ว — รายงานจะคำนวณใหม่ตามนี้');
+    populateCategorySelect();
+    if (document.getElementById('tab-periodic').classList.contains('active')) renderPeriodicList();
+  }));
 
   document.querySelectorAll('.chip-x').forEach(x => x.addEventListener('click', e => {
     const t = e.target.dataset.type, v = e.target.dataset.v;
@@ -755,7 +883,21 @@ document.getElementById('btn-add-channel').addEventListener('click', () => {
 document.getElementById('btn-add-category').addEventListener('click', () => {
   const inp = document.getElementById('new-category'); const val = inp.value.trim();
   if (!val) return; if (!presets.categories.includes(val)) presets.categories.push(val);
-  savePresets('categories'); renderPresetUI(); inp.value = '';
+  const g = document.getElementById('new-category-group').value;
+  if (PE_GROUPS[g]) presets.categoryGroups[val] = g;
+  savePresets('categories'); savePresets('categoryGroups'); renderPresetUI(); inp.value = '';
+});
+document.getElementById('btn-add-recommended-cats').addEventListener('click', () => {
+  const added = [];
+  RECOMMENDED_CATS.forEach(([n, g]) => {
+    if (presets.categories.includes(n)) return;
+    presets.categories.push(n);
+    if (!presets.categoryGroups[n]) presets.categoryGroups[n] = g;
+    added.push(n);
+  });
+  if (!added.length) { toast('มีหมวดแนะนำครบแล้ว ✔'); return; }
+  savePresets('categories'); savePresets('categoryGroups'); renderPresetUI();
+  toast('เพิ่มหมวด: ' + added.join(', '));
 });
 document.getElementById('btn-save-bench').addEventListener('click', () => {
   const { next, errs } = readBenchInputs();
@@ -778,8 +920,9 @@ document.getElementById('btn-reset-bench').addEventListener('click', () => {
 function populateCategorySelect() {
   const sel = document.getElementById('pe-category');
   const cur = sel.value;
-  sel.innerHTML = presets.categories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.innerHTML = presets.categories.map(c => `<option value="${esc(c)}">${esc(c)} · ${esc(PE_GROUPS[catGroup(c)].short)}</option>`).join('');
   if (cur) sel.value = cur;
+  if (!peEditId) document.getElementById('pe-group').value = catGroup(sel.value);
 }
 
 /* ============================================================
@@ -936,17 +1079,67 @@ document.getElementById('btn-delete-daily').addEventListener('click', () => {
 document.getElementById('pe-date').value = todayStr();
 document.getElementById('pe-filter-month').value = todayStr().slice(0,7);
 
-let peEditId = null;
+var peEditId = null; // var (ไม่ใช่ let) เพื่อให้ populateCategorySelect อ้างถึงได้อย่างปลอดภัยทุกจังหวะ
 function peSyncButton() {
   const btn = document.getElementById('btn-add-periodic');
   const cancel = document.getElementById('btn-cancel-periodic');
   if (btn) btn.textContent = peEditId ? '💾 บันทึกการแก้ไข' : '+ เพิ่มรายการ';
   if (cancel) cancel.style.display = peEditId ? 'inline-block' : 'none';
 }
+
+/* ---- การเฉลี่ยต้นทุน (ตัดจ่ายตามเดือนที่ใช้งาน) ----
+   spreadMonths ไม่มี/1 → ลงทั้งก้อนในวันที่จ่าย (เหมือนระบบเดิมทุกประการ)
+   spreadMonths = N → กระจายเท่าๆ กันรายวัน ตั้งแต่วันที่จ่าย ถึง (วันที่จ่าย + N เดือน − 1 วัน) */
+function peSpreadMonths(e) { const n = parseInt(e && e.spreadMonths, 10); return (n > 1 && n <= 36) ? n : 1; }
+function daysBetween(a, b) { return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000); }
+function peSpanEnd(e) {
+  const n = peSpreadMonths(e);
+  if (n === 1) return e.date;
+  const [y, m, d] = e.date.split('-').map(Number);
+  const lastDay = new Date(y, m - 1 + n + 1, 0).getDate();
+  const end = new Date(y, m - 1 + n, Math.min(d, lastDay));
+  end.setDate(end.getDate() - 1);
+  return ymd(end);
+}
+function peAllocate(e, from, to) {
+  if (!e || typeof e.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) return 0;
+  const amt = Number(e.amount) || 0;
+  if (peSpreadMonths(e) === 1) return (e.date >= from && e.date <= to) ? amt : 0;
+  const s = e.date, en = peSpanEnd(e);
+  const a = s > from ? s : from, b = en < to ? en : to;
+  if (a > b) return 0;
+  return amt * (daysBetween(a, b) + 1) / (daysBetween(s, en) + 1);
+}
+function monthBounds(month) {
+  const last = new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate();
+  return [month + '-01', month + '-' + String(last).padStart(2, '0')];
+}
+function peUpdatePreview() {
+  const box = document.getElementById('pe-spread-preview');
+  const n = parseInt(document.getElementById('pe-spread').value, 10) || 1;
+  const date = document.getElementById('pe-date').value;
+  const amt = parseFloat(document.getElementById('pe-amount').value) || 0;
+  if (n <= 1 || !date) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  const end = peSpanEnd({ date, spreadMonths: n });
+  box.style.display = 'block';
+  box.innerHTML = '📆 ระบบจะเฉลี่ยต้นทุน' + (amt > 0 ? ' <b>' + fmt(amt) + '</b>' : '') + ' ไปตลอด <b>' + n + ' เดือน</b> (' + toBE(date) + ' – ' + toBE(end) + ')'
+    + (amt > 0 ? ' ≈ <b>' + fmt(amt / n) + '/เดือน</b>' : '')
+    + '<br>รายงานกำไรจะนับเฉพาะส่วนที่ใช้ในแต่ละเดือน ส่วนยอด "เงินที่จ่ายออกจริง" ยังนับวันที่ ' + toBE(date) + ' ตามจริง';
+}
+['pe-amount', 'pe-date'].forEach(id => document.getElementById(id).addEventListener('input', peUpdatePreview));
+document.getElementById('pe-date').addEventListener('change', peUpdatePreview);
+document.getElementById('pe-spread').addEventListener('change', peUpdatePreview);
+document.getElementById('pe-category').addEventListener('change', e => {
+  document.getElementById('pe-group').value = catGroup(e.target.value);
+});
+
 function peClearForm() {
   peEditId = null;
   document.getElementById('pe-amount').value = '';
   document.getElementById('pe-note').value = '';
+  document.getElementById('pe-spread').value = '1';
+  document.getElementById('pe-group').value = catGroup(document.getElementById('pe-category').value);
+  peUpdatePreview();
   peSyncButton();
 }
 document.getElementById('btn-add-periodic').addEventListener('click', () => {
@@ -956,10 +1149,21 @@ document.getElementById('btn-add-periodic').addEventListener('click', () => {
   const note = document.getElementById('pe-note').value.trim();
   if (!category) { toast('กรุณาเลือกหมวดค่าใช้จ่าย (เพิ่มหมวดได้ที่แท็บตั้งค่า)'); return; }
   if (!date || amount <= 0) { toast('กรุณาระบุวันที่และจำนวนเงิน'); return; }
+  const grpSel = document.getElementById('pe-group').value;
+  const spread = parseInt(document.getElementById('pe-spread').value, 10) || 1;
+  // เก็บ group เฉพาะเมื่อต่างจากค่าของหมวด → ถ้าเปลี่ยนประเภทของหมวดในตั้งค่า รายการเก่าจะตามไปด้วย
+  const group = (PE_GROUPS[grpSel] && grpSel !== catGroup(category)) ? grpSel : null;
+  const spreadMonths = spread > 1 ? spread : null;
   const editing = peEditId;
-  const op = editing
-    ? refPeriodic.child(editing).update({ category, date, amount, note })
-    : refPeriodic.push({ category, date, amount, note, createdAt: Date.now() });
+  let op;
+  if (editing) {
+    op = refPeriodic.child(editing).update({ category, date, amount, note, group, spreadMonths });
+  } else {
+    const rec = { category, date, amount, note, createdAt: Date.now() };
+    if (group) rec.group = group;
+    if (spreadMonths) rec.spreadMonths = spreadMonths;
+    op = refPeriodic.push(rec);
+  }
   Promise.resolve(op).then(() => {
     toast(editing ? 'แก้ไขรายการเรียบร้อย ✔' : 'เพิ่มค่าใช้จ่ายประจำแล้ว');
     peClearForm();
@@ -983,10 +1187,13 @@ function renderPeriodicList() {
     let total = 0;
     body.innerHTML = entries.map(([id,e]) => {
       total += Number(e.amount) || 0;
-      return `<tr${peEditId === id ? ' style="background:#fff9e8;"' : ''}><td>${esc(e.date)}</td><td>${esc(e.category||'-')}</td><td>${esc(e.note||'-')}</td><td class="num">${fmt(Number(e.amount)||0)}</td>
+      const g = peGroup(e), n = peSpreadMonths(e);
+      const spreadTxt = n > 1 ? ` <span class="spread-badge" title="เฉลี่ยถึง ${esc(toBE(peSpanEnd(e)))}">🗓 เฉลี่ย ${n} ด. ≈ ${fmt((Number(e.amount)||0)/n)}/ด.</span>` : '';
+      return `<tr${peEditId === id ? ' style="background:#fff9e8;"' : ''}><td>${esc(e.date)}</td><td>${esc(e.category||'-')}<br>${groupBadge(g)}</td><td>${esc(e.note||'-')}${spreadTxt}</td><td class="num">${fmt(Number(e.amount)||0)}</td>
         <td style="white-space:nowrap;"><button class="ed-pe small" data-id="${id}" title="แก้ไข" style="color:var(--teal-dark);border:none;background:none;cursor:pointer;">✎</button><button class="rm-pe small" data-id="${id}" title="ลบ" style="color:var(--rust);border:none;background:none;cursor:pointer;">✕</button></td></tr>`;
     }).join('') || '<tr><td colspan="5" class="empty-note">ไม่มีรายการในเดือนนี้</td></tr>';
     document.getElementById('periodic-month-total').textContent = fmt(total);
+    renderPeriodicAllocSummary(month);
     body.querySelectorAll('.rm-pe').forEach(b => b.addEventListener('click', e => {
       const id = e.target.dataset.id;
       if (!confirm('ลบรายการนี้?')) return;
@@ -1005,9 +1212,17 @@ function renderPeriodicList() {
         const o = document.createElement('option'); o.value = cat; o.textContent = cat; sel.appendChild(o);
       }
       sel.value = cat;
+      document.getElementById('pe-group').value = peGroup(rec);
+      const spSel = document.getElementById('pe-spread');
+      const n = peSpreadMonths(rec);
+      if (!Array.from(spSel.options).some(o => o.value === String(n))) {
+        const o = document.createElement('option'); o.value = String(n); o.textContent = n + ' เดือน'; spSel.appendChild(o);
+      }
+      spSel.value = String(n);
       document.getElementById('pe-date').value = rec.date || todayStr();
       document.getElementById('pe-amount').value = Number(rec.amount) || 0;
       document.getElementById('pe-note').value = rec.note || '';
+      peUpdatePreview();
       peSyncButton();
       renderPeriodicList();
       document.getElementById('pe-amount').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1016,6 +1231,47 @@ function renderPeriodicList() {
   });
 }
 document.getElementById('pe-filter-month').addEventListener('change', renderPeriodicList);
+
+/* สรุป "ค่าใช้จ่ายที่ตกเดือนนี้จริง" หลังเฉลี่ย (ตัวเลขเดียวกับที่รายงานใช้คิดกำไร) */
+function renderPeriodicAllocSummary(month) {
+  const box = document.getElementById('periodic-alloc-summary');
+  if (!box) return;
+  if (!month) { box.innerHTML = ''; return; }
+  const [mFrom, mTo] = monthBounds(month);
+  const byG = { food: 0, marketing: 0, supplies: 0, utility: 0, other: 0 };
+  let allocTotal = 0, cashTotal = 0, hasSpread = false;
+  const carry = [];
+  Object.values(periodicCache || {}).forEach(e => {
+    if (!e || typeof e !== 'object' || typeof e.date !== 'string') return;
+    if (e.date >= mFrom && e.date <= mTo) cashTotal += Number(e.amount) || 0;
+    const a = peAllocate(e, mFrom, mTo);
+    if (peSpreadMonths(e) > 1 && (a > 0 || (e.date >= mFrom && e.date <= mTo))) hasSpread = true;
+    if (!a) return;
+    byG[peGroup(e)] += a; allocTotal += a;
+    if (e.date < mFrom) carry.push({ e, a });
+  });
+  if (!hasSpread && !(byG.food > 0) && !(byG.marketing > 0)) {
+    box.innerHTML = '<div class="empty-note" style="padding:10px 0 0;text-align:left;">💡 ของที่ซื้อทีละเยอะใช้หลายเดือน ให้ตั้ง "ใช้ได้นาน" ตอนกรอก ระบบจะเฉลี่ยต้นทุนให้ — เดือนนี้ไม่มีรายการเฉลี่ย ยอดที่ใช้คิดกำไรจึงเท่ากับเงินที่จ่ายจริง</div>';
+    return;
+  }
+  const line = (label, v, extra) => `<div class="receipt-line"${extra || ''}><span>${label}</span><span class="amt">${fmt(v)}</span></div>`;
+  let html = '<div class="alloc-box">'
+    + '<div style="font-weight:700;font-size:14px;margin-bottom:6px;">📊 ค่าใช้จ่ายที่ตกเดือนนี้จริง (หลังเฉลี่ย) — ตัวเลขนี้ใช้คิดกำไรในรายงาน</div>';
+  PE_GROUP_KEYS.forEach(k => { if (byG[k] > 0) html += line(PE_GROUPS[k].label + (k === 'food' ? ' → ย้ายไปรวมใน Food Cost' : k === 'marketing' ? ' → แยกไปบรรทัดค่าการตลาด' : ''), byG[k]); });
+  html += `<div class="receipt-line total"><span>รวมที่ตกเดือนนี้</span><span class="amt rust">${fmt(allocTotal)}</span></div>`;
+  const diff = cashTotal - allocTotal;
+  if (Math.abs(diff) >= 0.01) {
+    html += `<div style="font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.6;">${diff > 0
+      ? 'เดือนนี้จ่ายเงินออกไป <b>' + fmt(cashTotal) + '</b> แต่ ' + fmt(diff) + ' เป็นของที่ยังใช้ไม่หมด จะทยอยไปลงเดือนถัดๆ ไป'
+      : 'มีของที่ซื้อเดือนก่อนๆ ทยอยมาลงเดือนนี้ ' + fmt(-diff) + ' (เดือนนี้จ่ายเงินจริง ' + fmt(cashTotal) + ')'}</div>`;
+  }
+  if (carry.length) {
+    carry.sort((x, y) => y.a - x.a);
+    html += '<div style="font-size:12.5px;font-weight:700;margin-top:10px;">ยกมาจากเดือนก่อน</div>'
+      + carry.map(({ e, a }) => line(esc(e.date) + ' · ' + esc(e.category || '-') + (e.note ? ' · ' + esc(e.note) : '') + ' (' + fmt(Number(e.amount) || 0) + ' ÷ ' + peSpreadMonths(e) + ' ด.)', a, ' style="font-size:12.5px;"')).join('');
+  }
+  box.innerHTML = html + '</div>';
+}
 
 /* ============================================================
    DASHBOARD
@@ -1076,22 +1332,24 @@ function renderDashboard() {
     const curMonth = today.slice(0,7);
     let monthSales=0, monthDailyExp=0;
     Object.entries(daily).forEach(([date,rec]) => { if (date.startsWith(curMonth)) { monthSales += rec.netSales||0; monthDailyExp += rec.totalExpenses||0; } });
-    let monthPeriodic = 0;
-    Object.values(periodic).forEach(e => { if (e && typeof e.date === 'string' && e.date.startsWith(curMonth)) monthPeriodic += Number(e.amount) || 0; });
+    let monthPeriodic = 0, monthPeriodicCash = 0;
+    const [mStart, mEnd] = monthBounds(curMonth);
+    Object.values(periodic).forEach(e => {
+      if (!e || typeof e.date !== 'string') return;
+      monthPeriodic += peAllocate(e, mStart, mEnd);
+      if (e.date.startsWith(curMonth)) monthPeriodicCash += Number(e.amount) || 0;
+    });
     document.getElementById('dash-month-sales').textContent = fmt(monthSales);
     document.getElementById('dash-month-daily-exp').textContent = fmt(monthDailyExp);
     document.getElementById('dash-month-periodic-exp').textContent = fmt(monthPeriodic);
+    const cashEl = document.getElementById('dash-month-periodic-cash');
+    if (cashEl) cashEl.textContent = fmt(monthPeriodicCash);
     const monthProfit = monthSales - monthDailyExp - monthPeriodic;
     const mpEl = document.getElementById('dash-month-profit');
     mpEl.textContent = fmt(monthProfit); mpEl.className = 'amt ' + (monthProfit>=0?'pos':'neg');
 
-    // 14-day trend chart
-    const days14 = [];
-    for (let i=13;i>=0;i--) { const d = new Date(); d.setDate(d.getDate()-i); days14.push(ymd(d)); }
-    drawChart('chart-trend', 'line', days14.map(d=>d.slice(5)), [
-      { label:'ยอดขายสุทธิ', data: days14.map(d=>daily[d]?.netSales||0), color:'#0F6B5C' },
-      { label:'รายจ่าย', data: days14.map(d=>daily[d]?.totalExpenses||0), color:'#C1533A' },
-    ]);
+    // trend chart (30 days default, toggleable 14 / 30)
+    renderTrendChart(daily);
 
     // channel breakdown 30 days (donut)
     const days30 = []; for (let i=29;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days30.push(ymd(d)); }
@@ -1100,8 +1358,6 @@ function renderDashboard() {
     drawDonut('chart-channels', ['เงินสด','เงินโอน','คนละครึ่ง'], [cCash,cTransfer,cHalf], ['#0F6B5C','#C98A25','#C1533A']);
 
     // สัดส่วน % ของเดือนนี้ (แบบย่อ)
-    const mStart = curMonth + '-01';
-    const mEnd = curMonth + '-' + String(new Date(Number(curMonth.slice(0,4)), Number(curMonth.slice(5,7)), 0).getDate()).padStart(2,'0');
     renderCostMini(computePeriodTotals(mStart, mEnd, daily, periodic));
   });
 }
@@ -1109,19 +1365,43 @@ function renderDashboard() {
 /* ============================================================
    CHART HELPERS
 ============================================================ */
+let dashTrendDays = 30;
+function renderTrendChart(daily) {
+  const n = dashTrendDays;
+  const ttl = document.getElementById('dash-trend-title');
+  if (ttl) ttl.textContent = `ยอดขาย ${n} วันล่าสุด`;
+  const days = [];
+  for (let i = n - 1; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(ymd(d)); }
+  drawChart('chart-trend', 'line', days.map(d => d.slice(5)), [
+    { label:'ยอดขายสุทธิ', data: days.map(d => daily[d]?.netSales || 0), color:'#0F6B5C' },
+    { label:'รายจ่าย', data: days.map(d => daily[d]?.totalExpenses || 0), color:'#C1533A' },
+  ], n >= 30 ? { pointRadius: 1.5, maxTicksLimit: 10 } : { pointRadius: 2.5 });
+}
+document.querySelectorAll('#dash-trend-seg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#dash-trend-seg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    dashTrendDays = Number(b.dataset.days) || 30;
+    renderTrendChart(dailyCache || {});
+  });
+});
+
 let chartInstances = {};
-function drawChart(canvasId, type, labels, datasets) {
+function drawChart(canvasId, type, labels, datasets, opts) {
+  opts = opts || {};
   const ctx = document.getElementById(canvasId).getContext('2d');
   if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+  const xTicks = { font:{family:'IBM Plex Mono',size:10} };
+  if (opts.maxTicksLimit) { xTicks.autoSkip = true; xTicks.maxTicksLimit = opts.maxTicksLimit; xTicks.maxRotation = 0; }
   chartInstances[canvasId] = new Chart(ctx, {
     type,
     data: { labels, datasets: datasets.map(ds => ({
       label: ds.label, data: ds.data, borderColor: ds.color, backgroundColor: ds.color + '33',
-      tension: .3, fill: type==='line', borderWidth: 2, pointRadius: 2
+      tension: .3, fill: type==='line', borderWidth: 2, pointRadius: opts.pointRadius != null ? opts.pointRadius : 2
     })) },
     options: { responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Sarabun'}, boxWidth:12 } } },
-      scales:{ x:{ ticks:{font:{family:'IBM Plex Mono',size:10}} }, y:{ ticks:{font:{family:'IBM Plex Mono',size:10}} } } }
+      scales:{ x:{ ticks:xTicks }, y:{ ticks:{font:{family:'IBM Plex Mono',size:10}} } } }
   });
 }
 function drawDonut(canvasId, labels, data, colors) {
@@ -1182,24 +1462,37 @@ function computePeriodTotals(from, to, daily, periodic) {
     rows.push({ date:d, sales:ns, exp:ex, profit:ns-ex });
   });
 
-  let periodicExp = 0;
+  // ค่าใช้จ่ายประจำ: เฉลี่ยตามช่วงที่ใช้งาน (peAllocate) + แยกตามประเภทบัญชี
+  // ประเภท "วัตถุดิบ" → รวมใน foodCost · ประเภท "การตลาด" → แยกเป็น marketing · ที่เหลือ → periodicExp
+  let periodicExp = 0, periodicFood = 0, periodicMarketing = 0, periodicCash = 0;
   const periodicByCat = {};
+  const marketingByCat = {};
+  const periodicByGroup = { food: 0, marketing: 0, supplies: 0, utility: 0, other: 0 };
   Object.values(periodic || {}).forEach(e => {
     if (!e || typeof e.date !== 'string') return;
-    if (e.date < from || e.date > to) return;
-    const amt = Number(e.amount) || 0;
-    periodicExp += amt;
+    if (e.date >= from && e.date <= to) periodicCash += Number(e.amount) || 0;
+    const amt = peAllocate(e, from, to);
+    if (!amt) return;
+    const g = peGroup(e);
+    periodicByGroup[g] += amt;
+    if (g === 'food') { periodicFood += amt; return; }
     const cat = (e.category || 'ไม่ระบุหมวด').trim();
+    if (g === 'marketing') {
+      periodicMarketing += amt;
+      marketingByCat[cat] = (marketingByCat[cat] || 0) + amt;
+      return;
+    }
+    periodicExp += amt;
     periodicByCat[cat] = (periodicByCat[cat] || 0) + amt;
   });
 
-  const expenses = dailyExp + periodicExp;
-  const foodCost = market + purchases;
+  const expenses = dailyExp + periodicExp + periodicFood + periodicMarketing;
+  const foodCost = market + purchases + periodicFood;
   return {
-    sales, expenses, dailyExp, periodicExp,
+    sales, expenses, dailyExp, periodicExp, periodicFood, periodicMarketing, periodicCash,
     profit: sales - expenses,
     rows, days, activeDays,
-    breakdown: { labor, rent, market, purchases, foodCost, periodicByCat, periodicExp },
+    breakdown: { labor, rent, market, purchases, periodicFood, foodCost, marketing: periodicMarketing, marketingByCat, periodicByCat, periodicByGroup, periodicExp },
     channels: { cash, transfer, half }
   };
 }
@@ -1259,6 +1552,7 @@ document.getElementById('btn-run-compare').addEventListener('click', () => {
           <tr><td>ค่าแรง</td><td class="num">${pctTxt(A.breakdown.labor,A.sales)}</td><td class="num">${pctTxt(B.breakdown.labor,B.sales)}</td><td class="num">${ppDiff(A.breakdown.labor,A.sales,B.breakdown.labor,B.sales)}</td></tr>
           <tr><td>ต้นทุนวัตถุดิบ (ตลาด+ร้านค้า)</td><td class="num">${pctTxt(A.breakdown.foodCost,A.sales)}</td><td class="num">${pctTxt(B.breakdown.foodCost,B.sales)}</td><td class="num">${ppDiff(A.breakdown.foodCost,A.sales,B.breakdown.foodCost,B.sales)}</td></tr>
           <tr><td>ค่าเช่า/ที่พักลูกน้อง</td><td class="num">${pctTxt(A.breakdown.rent,A.sales)}</td><td class="num">${pctTxt(B.breakdown.rent,B.sales)}</td><td class="num">${ppDiff(A.breakdown.rent,A.sales,B.breakdown.rent,B.sales)}</td></tr>
+          <tr><td>ค่าการตลาด/ยิงแอด</td><td class="num">${pctTxt(A.breakdown.marketing,A.sales)}</td><td class="num">${pctTxt(B.breakdown.marketing,B.sales)}</td><td class="num">${ppDiff(A.breakdown.marketing,A.sales,B.breakdown.marketing,B.sales)}</td></tr>
           <tr><td>ค่าใช้จ่ายประจำ/อื่นๆ</td><td class="num">${pctTxt(A.breakdown.periodicExp,A.sales)}</td><td class="num">${pctTxt(B.breakdown.periodicExp,B.sales)}</td><td class="num">${ppDiff(A.breakdown.periodicExp,A.sales,B.breakdown.periodicExp,B.sales)}</td></tr>
           <tr><td><b>อัตรากำไรสุทธิ</b></td><td class="num">${pctTxt(A.profit,A.sales)}</td><td class="num">${pctTxt(B.profit,B.sales)}</td><td class="num">${ppDiff(A.profit,A.sales,B.profit,B.sales)}</td></tr>
         </tbody>
@@ -1280,9 +1574,11 @@ document.getElementById('btn-export-csv').addEventListener('click', () => {
     ['ค่าแรง', b.labor],
     ['ซื้อของตลาด (สุทธิ)', b.market],
     ['ซื้อของเพิ่มเติม/ร้านค้า', b.purchases],
+    ['วัตถุดิบซื้อสต็อก (แท็บค่าใช้จ่ายประจำ เฉลี่ยแล้ว)', b.periodicFood],
     ['รวมต้นทุนวัตถุดิบ', b.foodCost],
     ['ค่าเช่า/ที่พักลูกน้อง', b.rent],
-    ['ค่าใช้จ่ายประจำ', b.periodicExp],
+    ['ค่าการตลาด/ยิงแอด (เฉลี่ยแล้ว)', b.marketing],
+    ['ค่าใช้จ่ายประจำ (ไม่รวมวัตถุดิบ/การตลาด เฉลี่ยแล้ว)', b.periodicExp],
     ['รายจ่ายรวม', res.expenses],
     ['กำไรสุทธิ', res.profit]
   ];
@@ -1336,7 +1632,7 @@ document.getElementById('btn-wipe').addEventListener('click', () => {
     window._backupDone = false;
     toast('ลบข้อมูลระบบบัญชีร้านอาหารเรียบร้อย (ข้อมูลระบบอื่นไม่ถูกกระทบ)');
     document.getElementById('confirm-wipe-text').value = '';
-    presets = { vendors:[], channels:[], categories:['ค่าน้ำ','ค่าไฟ','ค่าอินเทอร์เน็ต','ค่าใช้จ่ายอื่นๆ'] };
+    presets = { vendors:[], channels:[], categories: defaultCategories(), categoryGroups: {} };
     renderPresetUI(); resetDailyForm(); recalcAll(); renderDashboard(); renderPeriodicList();
   });
 });
@@ -1369,24 +1665,26 @@ document.getElementById('btn-export-report-img').addEventListener('click', () =>
 ============================================================ */
 // เกณฑ์มาตรฐานธุรกิจร้านอาหาร (% ของยอดขายสุทธิ)
 const DEFAULT_BENCH = {
-  labor:    { lo: 15, hi: 25 },
-  foodCost: { lo: 28, hi: 38 },
-  rent:     { lo: 0,  hi: 10 },
-  periodic: { lo: 0,  hi: 10 },
-  prime:    { lo: 0,  hi: 65 },
-  expenses: { lo: 0,  hi: 85 },
-  profit:   { lo: 10, hi: 100 }
+  labor:     { lo: 15, hi: 25 },
+  foodCost:  { lo: 28, hi: 38 },
+  rent:      { lo: 0,  hi: 10 },
+  marketing: { lo: 0,  hi: 5  },
+  periodic:  { lo: 0,  hi: 10 },
+  prime:     { lo: 0,  hi: 65 },
+  expenses:  { lo: 0,  hi: 85 },
+  profit:    { lo: 10, hi: 100 }
 };
 
 // mode: range = มีทั้งขั้นต่ำ/ขั้นสูง | max = ไม่ควรเกิน | min = ไม่ควรต่ำกว่า
 const BENCH_META = {
-  labor:    { name: '🧑‍🍳 ค่าแรงลูกน้อง', mode: 'range', hint: 'ร้านอาหารทั่วไป 15–25%' },
-  foodCost: { name: '🥕 ต้นทุนวัตถุดิบ (ตลาด+ร้านค้า)', mode: 'range', hint: 'ร้านอาหารทั่วไป 28–38%' },
-  rent:     { name: '🏠 ค่าเช่า/ที่พักลูกน้อง', mode: 'max', hint: 'ไม่ควรเกิน 10%' },
-  periodic: { name: '💧 ค่าใช้จ่ายประจำ/เล็กๆ น้อยๆ', mode: 'max', hint: 'ไม่ควรเกิน 10%' },
-  prime:    { name: '⚡ Prime Cost (ค่าแรง + วัตถุดิบ)', mode: 'max', hint: 'ตัวเลขชี้ชะตาสุด ไม่ควรเกิน 65%' },
-  expenses: { name: '📉 รายจ่ายรวมทั้งหมด', mode: 'max', hint: 'ไม่ควรเกิน 85%' },
-  profit:   { name: '💰 กำไรสุทธิ (Net Margin)', mode: 'min', hint: 'ควรได้อย่างน้อย 10%' }
+  labor:     { name: '🧑‍🍳 ค่าแรงลูกน้อง', mode: 'range', hint: 'ร้านอาหารทั่วไป 15–25%' },
+  foodCost:  { name: '🥕 ต้นทุนวัตถุดิบ (ตลาด+ร้านค้า)', mode: 'range', hint: 'ร้านอาหารทั่วไป 28–38%' },
+  rent:      { name: '🏠 ค่าเช่า/ที่พักลูกน้อง', mode: 'max', hint: 'ไม่ควรเกิน 10%' },
+  marketing: { name: '📣 ค่าการตลาด/ยิงแอด', mode: 'max', hint: 'ร้านอาหารทั่วไป 3–5%' },
+  periodic:  { name: '💧 ค่าใช้จ่ายประจำ/เล็กๆ น้อยๆ', mode: 'max', hint: 'ไม่ควรเกิน 10%' },
+  prime:     { name: '⚡ Prime Cost (ค่าแรง + วัตถุดิบ)', mode: 'max', hint: 'ตัวเลขชี้ชะตาสุด ไม่ควรเกิน 65%' },
+  expenses:  { name: '📉 รายจ่ายรวมทั้งหมด', mode: 'max', hint: 'ไม่ควรเกิน 85%' },
+  profit:    { name: '💰 กำไรสุทธิ (Net Margin)', mode: 'min', hint: 'ควรได้อย่างน้อย 10%' }
 };
 
 let COST_BENCH = JSON.parse(JSON.stringify(DEFAULT_BENCH));
@@ -1545,10 +1843,16 @@ function renderCostStructure(res) {
     { name: '\ud83e\udd55 \u0e23\u0e27\u0e21\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a (Food Cost)', v: b.foodCost, key: 'foodCost', strong: true },
     { name: '\ud83c\udfe0 \u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01\u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07', v: b.rent, key: 'rent' }
   ];
+  if ((b.periodicFood || 0) > 0) {
+    rows.splice(3, 0, { name: '🧾 วัตถุดิบซื้อสต็อก (จากแท็บค่าใช้จ่ายประจำ · เฉลี่ยตามเดือนที่ใช้)', v: b.periodicFood, key: null, sub: true });
+  }
 
   const cats = Object.entries(b.periodicByCat || {}).sort((x, y) => y[1] - x[1]);
   rows.push({ name: '\ud83d\udca7 \u0e04\u0e48\u0e32\u0e43\u0e0a\u0e49\u0e08\u0e48\u0e32\u0e22\u0e1b\u0e23\u0e30\u0e08\u0e33/\u0e40\u0e25\u0e47\u0e01\u0e46 \u0e19\u0e49\u0e2d\u0e22\u0e46', v: b.periodicExp, key: 'periodic' });
   cats.forEach(([k, v]) => rows.push({ name: '\u2514 ' + k, v: v, key: null, sub: true }));
+  const mktCats = Object.entries(b.marketingByCat || {}).sort((x, y) => y[1] - x[1]);
+  rows.push({ name: '📣 ค่าการตลาด/ยิงแอด', v: b.marketing || 0, key: 'marketing' });
+  if (mktCats.length > 1) mktCats.forEach(([k, v]) => rows.push({ name: '└ ' + k, v: v, key: null, sub: true }));
 
   let html = rows.map(r => {
     const p = pctOf(r.v, sales);
@@ -1589,9 +1893,9 @@ function renderCostStructure(res) {
 
   renderCostVerdict(res, prime);
 
-  const donutLabels = ['\u0e04\u0e48\u0e32\u0e41\u0e23\u0e07', '\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a', '\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01', '\u0e08\u0e48\u0e32\u0e22\u0e1b\u0e23\u0e30\u0e08\u0e33/\u0e2d\u0e37\u0e48\u0e19\u0e46', '\u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34'];
-  const donutData = [b.labor || 0, b.foodCost || 0, b.rent || 0, b.periodicExp || 0, Math.max(res.profit || 0, 0)];
-  drawDonut('chart-cost-donut', donutLabels, donutData, ['#C98A25', '#C1533A', '#7B6CA8', '#8a857c', '#0F6B5C']);
+  const donutLabels = ['\u0e04\u0e48\u0e32\u0e41\u0e23\u0e07', '\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a', '\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01', '\u0e08\u0e48\u0e32\u0e22\u0e1b\u0e23\u0e30\u0e08\u0e33/\u0e2d\u0e37\u0e48\u0e19\u0e46', 'การตลาด', '\u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34'];
+  const donutData = [b.labor || 0, b.foodCost || 0, b.rent || 0, b.periodicExp || 0, b.marketing || 0, Math.max(res.profit || 0, 0)];
+  drawDonut('chart-cost-donut', donutLabels, donutData, ['#C98A25', '#C1533A', '#7B6CA8', '#8a857c', '#9B59B6', '#0F6B5C']);
 }
 
 function renderCostVerdict(res, prime) {
@@ -1607,7 +1911,7 @@ function renderCostVerdict(res, prime) {
   }
 
   const P = k => pctOf(k, sales);
-  const food = P(b.foodCost), lab = P(b.labor), rnt = P(b.rent), per = P(b.periodicExp), prm = P(prime), prof = P(res.profit);
+  const food = P(b.foodCost), lab = P(b.labor), rnt = P(b.rent), mkt = P(b.marketing), per = P(b.periodicExp), prm = P(prime), prof = P(res.profit);
 
   const push = (cls, head, detail) => items.push({ cls, head, detail });
 
@@ -1638,6 +1942,11 @@ function renderCostVerdict(res, prime) {
   if (rnt !== null && rnt > COST_BENCH.rent.hi) {
     push('warn', '\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01\u0e2a\u0e39\u0e07 ' + rnt.toFixed(1) + '% (\u0e40\u0e01\u0e13\u0e11\u0e4c ' + benchLabel('rent') + ')',
       '\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32\u0e40\u0e1b\u0e47\u0e19\u0e15\u0e49\u0e19\u0e17\u0e38\u0e19\u0e04\u0e07\u0e17\u0e35\u0e48 \u0e25\u0e14\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e07\u0e48\u0e32\u0e22 \u2014 \u0e17\u0e32\u0e07\u0e2d\u0e2d\u0e01\u0e04\u0e37\u0e2d <b>\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e22\u0e2d\u0e14\u0e02\u0e32\u0e22</b> \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e40\u0e08\u0e37\u0e2d\u0e08\u0e32\u0e07\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32\u0e43\u0e2b\u0e49\u0e04\u0e38\u0e49\u0e21');
+  }
+
+  if (mkt !== null && mkt > COST_BENCH.marketing.hi) {
+    push('warn', 'ค่าการตลาด/ยิงแอดสูง ' + mkt.toFixed(1) + '% (เกณฑ์ ' + benchLabel('marketing') + ')',
+      'ลองเช็กว่าแอดที่ยิงช่วยเพิ่มยอดขายคุ้มกับเงินที่จ่ายไปไหม — ถ้ายอดขายยังไม่โตตาม ควรปรับกลุ่มเป้าหมายหรือคอนเทนต์ก่อนเพิ่มงบ');
   }
 
   if (per !== null && per > COST_BENCH.periodic.hi) {
@@ -1690,6 +1999,7 @@ function renderCostMini(res) {
     ['\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e34\u0e1a (\u0e15\u0e25\u0e32\u0e14+\u0e23\u0e49\u0e32\u0e19\u0e04\u0e49\u0e32)', b.foodCost, 'foodCost'],
     ['\u0e04\u0e48\u0e32\u0e40\u0e0a\u0e48\u0e32/\u0e17\u0e35\u0e48\u0e1e\u0e31\u0e01\u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07', b.rent, 'rent'],
     ['\u0e08\u0e48\u0e32\u0e22\u0e1b\u0e23\u0e30\u0e08\u0e33/\u0e40\u0e25\u0e47\u0e01\u0e46 \u0e19\u0e49\u0e2d\u0e22\u0e46', b.periodicExp, 'periodic'],
+    ['📣 การตลาด/ยิงแอด', b.marketing || 0, 'marketing'],
     ['\u0e01\u0e33\u0e44\u0e23\u0e2a\u0e38\u0e17\u0e18\u0e34', res.profit, 'profit']
   ];
   document.getElementById('dash-cost-mini-body').innerHTML = sales <= 0
